@@ -389,32 +389,14 @@ async function checkLoyalty() {
   btn.textContent='⏳ جاري الاستعلام...'; btn.disabled=true;
   loyalPhone = phone;
   try {
-    // Auth
-    const authR = await fetch(`${ODOO.url}/xmlrpc/2/common`, {
-      method:'POST', headers:{'Content-Type':'text/xml'},
-      body:`<?xml version="1.0"?><methodCall><methodName>authenticate</methodName><params><param><value><string>${ODOO.db}</string></value></param><param><value><string>${ODOO.user}</string></value></param><param><value><string>${ODOO.pass}</string></value></param><param><value><struct></struct></value></param></params></methodCall>`
+    const resp = await fetch('/.netlify/functions/loyalty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone })
     });
-    const authT = await authR.text();
-    const uid = authT.match(/<int>(\d+)<\/int>/)?.[1];
-    if(!uid) throw new Error('auth');
-
-    // Search by phone variants
-    const variants = [phone, phone.replace(/^0/,'+966'), phone.replace(/^0/,'966')];
-    let points = null;
-    for(const ph of variants) {
-      const r = await fetch(`${ODOO.url}/xmlrpc/2/object`, {
-        method:'POST', headers:{'Content-Type':'text/xml'},
-        body:`<?xml version="1.0"?><methodCall><methodName>execute_kw</methodName><params><param><value><string>${ODOO.db}</string></value></param><param><value><int>${uid}</int></value></param><param><value><string>${ODOO.pass}</string></value></param><param><value><string>res.partner</string></value></param><param><value><string>search_read</string></value></param><param><value><array><data><value><array><data><value><array><data><value><string>phone</string></value><value><string>=</string></value><value><string>${ph}</string></value></data></array></value></data></array></value></data></array></value></param><param><value><struct><member><name>fields</name><value><array><data><value><string>remaining_points</string></value></data></array></value></member><member><name>limit</name><value><int>1</int></value></member></struct></value></param></params></methodCall>`
-      });
-      const txt = await r.text();
-      if(txt.includes('remaining_points')) {
-        const m = txt.match(/<name>remaining_points<\/name>\s*<value>\s*<(?:int|i4)>(\d+)<\/(?:int|i4)>/);
-        points = m ? parseInt(m[1]) : 0;
-        break;
-      }
-    }
-    if(points !== null) {
-      document.getElementById('loyalPoints').textContent = points;
+    const data = await resp.json();
+    if(data.found) {
+      document.getElementById('loyalPoints').textContent = data.points;
       showStep(2);
     } else {
       showStep(3);
