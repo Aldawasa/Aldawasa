@@ -9,165 +9,453 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
     * { font-family: 'Tajawal', sans-serif; }
-    .card { transition: transform .15s, box-shadow .15s; }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.1); }
-    .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
-    .spinner { border:4px solid #e5e7eb; border-top:4px solid #059669; border-radius:50%; width:40px; height:40px; animation:spin .8s linear infinite; margin:0 auto; }
+    #cartPanel { transition: transform 0.3s ease; }
+    #cartPanel.open { transform: translateX(0) !important; }
+    #cartOverlay { transition: opacity 0.3s ease; }
+    .offer-card { transition: transform .15s, box-shadow .15s; }
+    .offer-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.1); }
+    .cat-scroll { scrollbar-width: none; }
+    .cat-scroll::-webkit-scrollbar { display: none; }
+    .modal-back { position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:center;justify-content:center; }
+    .modal-box { background:white;border-radius:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px;margin:16px; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+    .fade-up { animation: fadeUp .3s ease forwards; }
     @keyframes spin{to{transform:rotate(360deg)}}
-    .img-slider { overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
-    .img-slider::-webkit-scrollbar { display:none; }
-    .img-slide { scroll-snap-align:start; flex-shrink:0; }
-    .out-of-stock { filter: grayscale(60%); opacity: 0.7; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
-    .fade-in { animation: fadeIn .35s ease forwards; }
+    .spinner { border:3px solid #e5e7eb;border-top:3px solid #059669;border-radius:50%;width:32px;height:32px;animation:spin .8s linear infinite;margin:0 auto; }
+    .cond-field { overflow:hidden;max-height:0;transition:max-height .3s ease,opacity .3s ease;opacity:0; }
+    .cond-field.show { max-height:120px;opacity:1; }
+    .badge-pill { display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-<!-- رأس الصفحة -->
-<header class="bg-gradient-to-l from-green-700 to-emerald-600 text-white sticky top-0 z-20 shadow-lg">
-  <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+<!-- HEADER -->
+<header class="bg-gradient-to-l from-green-700 to-emerald-600 text-white sticky top-0 z-30 shadow-lg">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <span class="text-3xl">💊</span>
+      <span class="text-2xl">💊</span>
       <div>
-        <h1 class="font-extrabold text-lg leading-tight">صيدلية الدواء النفيس</h1>
+        <h1 class="font-extrabold text-base leading-tight">صيدلية الدواء النفيس</h1>
         <p class="text-green-200 text-xs">أفضل العروض بأقل الأسعار</p>
       </div>
     </div>
-    <div class="text-left">
-      <p class="text-green-200 text-xs">اتصل بنا</p>
-      <a href="tel:+966" class="font-bold text-sm text-white">📞 اتصل الآن</a>
+    <div class="flex items-center gap-2">
+      <button onclick="openLoyalty()" class="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-2 rounded-xl hover:bg-amber-300 transition">⭐ نقاط الولاء</button>
+      <button onclick="openCart()" class="relative bg-white/20 hover:bg-white/30 transition p-2 rounded-xl">
+        <span class="text-xl">🛒</span>
+        <span id="cartBadge" class="absolute -top-1 -left-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full items-center justify-center hidden">0</span>
+      </button>
     </div>
   </div>
 </header>
 
-<!-- بانر -->
-<div class="bg-amber-400 text-amber-900 text-center py-2 text-sm font-bold">
-  🔥 عروض محدودة – اطلب الآن قبل نفاد الكمية!
+<div class="bg-amber-400 text-amber-900 text-center py-2 text-xs font-bold">
+  🔥 عروض محدودة — اطلب الآن قبل نفاد الكمية! | 📞 0539835556
 </div>
 
-<!-- فلتر الفئات -->
-<div class="max-w-5xl mx-auto px-4 pt-5">
-  <div id="catFilters" class="flex gap-2 overflow-x-auto pb-2 hide-scroll">
-    <button onclick="filterCat('all')" id="cat-all"
-      class="cat-btn active whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white flex-shrink-0">
-      🏷️ الكل
-    </button>
+<!-- FILTERS -->
+<div class="max-w-5xl mx-auto px-4 pt-4">
+  <div id="catFilters" class="flex gap-2 overflow-x-auto cat-scroll pb-1">
+    <button onclick="setFilter('all')" id="f-all" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white flex-shrink-0">🏷️ الكل</button>
+    <button onclick="setFilter('featured')" id="f-featured" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-amber-600 border border-amber-300 flex-shrink-0">⭐ المميزة</button>
   </div>
 </div>
 
-<!-- البحث -->
 <div class="max-w-5xl mx-auto px-4 mt-3 mb-4">
-  <input id="searchQ" type="text" placeholder="🔍  ابحث عن منتج..."
-    oninput="renderCards()"
+  <input id="searchQ" type="text" placeholder="🔍  ابحث عن منتج..." oninput="renderCards()"
     class="w-full border border-gray-200 bg-white rounded-2xl px-5 py-3 focus:outline-none focus:border-green-400 shadow-sm" />
 </div>
 
-<!-- بطاقات المنتجات -->
-<main class="max-w-5xl mx-auto px-4 pb-12">
+<!-- GRID -->
+<main class="max-w-5xl mx-auto px-4 pb-24">
   <div id="loadingBox" class="py-16 text-center"><div class="spinner"></div><p class="text-gray-400 mt-4 text-sm">جاري تحميل العروض...</p></div>
   <div id="grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
-  <p id="emptyMsg" class="hidden text-center text-gray-400 py-16 text-lg">لا توجد عروض حالياً 😔</p>
+  <p id="emptyMsg" class="hidden text-center text-gray-400 py-16">لا توجد نتائج 😔</p>
 </main>
 
-<!-- Footer -->
-<footer class="bg-green-800 text-green-200 text-center py-6 text-sm">
+<!-- CART OVERLAY -->
+<div id="cartOverlay" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0" onclick="closeCart()"></div>
+
+<!-- CART PANEL -->
+<div id="cartPanel" class="fixed top-0 left-0 h-full w-80 bg-white z-50 shadow-2xl flex flex-col" style="transform:translateX(-100%)">
+  <div class="flex items-center justify-between px-4 py-4 border-b bg-green-600 text-white">
+    <h2 class="font-bold text-lg">🛒 طلبي</h2>
+    <button onclick="closeCart()" class="text-white/80 hover:text-white text-2xl leading-none">x</button>
+  </div>
+  <div id="cartItems" class="flex-1 overflow-y-auto px-4 py-3 space-y-3"></div>
+  <div class="border-t px-4 py-4 bg-gray-50 space-y-3">
+    <div class="flex justify-between text-sm font-bold text-gray-700">
+      <span>عدد المنتجات:</span><span id="cartCount">0</span>
+    </div>
+    <button onclick="sendWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 transition">
+      💬 أرسل الطلب على واتساب
+    </button>
+    <button onclick="clearCart()" class="w-full text-red-500 text-sm hover:bg-red-50 py-2 rounded-xl transition">مسح الطلب</button>
+  </div>
+</div>
+
+<!-- LOYALTY MODAL -->
+<div id="loyaltyModal" class="modal-back hidden" onclick="if(event.target===this)closeLoyalty()">
+  <div class="modal-box">
+
+    <!-- Step 1: phone input -->
+    <div id="loyalStep1">
+      <div class="text-center mb-5">
+        <div class="text-4xl mb-2">⭐</div>
+        <h2 class="text-xl font-bold text-gray-800">نقاط الولاء</h2>
+        <p class="text-gray-500 text-sm mt-1">أدخل رقم جوالك لمعرفة نقاطك</p>
+      </div>
+      <input id="loyalPhone" type="tel" placeholder="05XXXXXXXX" maxlength="10"
+        class="w-full border border-gray-300 rounded-2xl px-4 py-3 text-center text-lg focus:outline-none focus:border-green-500 mb-3"
+        onkeydown="if(event.key==='Enter')checkLoyalty()" />
+      <button onclick="checkLoyalty()" id="loyalBtn"
+        class="w-full bg-green-600 text-white py-3 rounded-2xl font-bold hover:bg-green-700 transition mb-2">
+        استعلم عن نقاطي
+      </button>
+      <button onclick="closeLoyalty()" class="w-full text-gray-400 text-sm py-2">إلغاء</button>
+      <p id="loyalErr" class="text-red-500 text-sm text-center mt-2 hidden">حدث خطأ، حاول مرة ثانية</p>
+    </div>
+
+    <!-- Step 2: found -->
+    <div id="loyalStep2" class="hidden">
+      <div class="text-center mb-4">
+        <div class="text-4xl mb-2">🎉</div>
+        <h2 class="text-lg font-bold text-gray-800">رصيد نقاطك</h2>
+        <div class="text-5xl font-extrabold text-green-600 mt-1" id="loyalPoints">0</div>
+        <p class="text-gray-400 text-sm">نقطة ولاء</p>
+      </div>
+
+      <div class="bg-green-50 rounded-2xl p-4 mb-4">
+        <p class="text-sm font-bold text-green-800 mb-3">💚 تبي تساعدنا نخدمك أفضل؟ (اختياري)</p>
+        <div class="mb-3">
+          <label class="text-xs text-gray-500 mb-1 block">الاسم الذي تريد أن يظهر للصيدلية</label>
+          <input id="lName" type="text" placeholder="مثال: أبو محمد"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400" />
+        </div>
+        <div class="mb-3">
+          <label class="text-xs text-gray-500 mb-1 block">البريد الإلكتروني</label>
+          <input id="lEmail" type="email" placeholder="example@email.com"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-2 block">معلومات صحية تساعدنا في خدمتك</label>
+          <div class="space-y-1 text-sm">
+            <p class="text-xs text-gray-400 font-bold">الحالات المزمنة</p>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="ضغط الدم"> ضغط الدم</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="السكري"> السكري</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="أمراض القلب"> أمراض القلب</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="أمراض الكلى"> أمراض الكلى</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="الغدة الدرقية"> الغدة الدرقية</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="الربو"> الربو أو أمراض التنفس</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="أمراض المفاصل"> أمراض المفاصل والعظام</label>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">الحساسيات</p>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="hcDrug" onchange="toggleCond('cdDrug')"> حساسية من أدوية معينة
+            </label>
+            <div id="cdDrug" class="cond-field pr-4">
+              <input id="hcDrugTxt" type="text" placeholder="اكتب الأدوية (اختياري)"
+                class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm mt-1 focus:outline-none focus:border-green-400"/>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="حساسية جلدية"> حساسية جلدية</label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="hcFood" onchange="toggleCond('cdFood')"> حساسية غذائية
+            </label>
+            <div id="cdFood" class="cond-field pr-4">
+              <input id="hcFoodTxt" type="text" placeholder="اكتب الأطعمة (اختياري)"
+                class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm mt-1 focus:outline-none focus:border-green-400"/>
+            </div>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">حالات خاصة</p>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="حامل"> حامل</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="مرضعة"> مرضعة</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="كبار السن +65"> كبار السن (فوق 65)</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="أطفال في المنزل"> أطفال دون 12 في المنزل</label>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">الأدوية والمكملات</p>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="hcMed" onchange="toggleCond('cdMed')"> أدوية دائمة
+            </label>
+            <div id="cdMed" class="cond-field pr-4">
+              <input id="hcMedTxt" type="text" placeholder="اذكر الأدوية (اختياري)"
+                class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm mt-1 focus:outline-none focus:border-green-400"/>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="hc" value="مكملات غذائية"> مكملات غذائية بانتظام</label>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">ملاحظة إضافية</p>
+            <textarea id="lNote" placeholder="أي معلومة تبي تشاركنا إياها..." rows="2"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400 resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="sendLoyaltyInfo()" class="w-full bg-green-600 text-white py-3 rounded-2xl font-bold hover:bg-green-700 transition mb-2">
+        💬 أرسل للصيدلية
+      </button>
+      <button onclick="closeLoyalty()" class="w-full text-gray-400 text-sm py-2">إغلاق بدون إرسال</button>
+    </div>
+
+    <!-- Step 3: not found -->
+    <div id="loyalStep3" class="hidden text-center">
+      <div class="text-4xl mb-3">📋</div>
+      <h2 class="text-lg font-bold text-gray-800 mb-2">رقمك غير مسجل</h2>
+      <p class="text-gray-500 text-sm mb-5">تبي تسجل في برنامج الولاء وتبدأ تجمع نقاط؟</p>
+      <button onclick="registerLoyalty()" class="w-full bg-green-600 text-white py-3 rounded-2xl font-bold hover:bg-green-700 transition mb-2">
+        ✅ سجلني في برنامج الولاء
+      </button>
+      <button onclick="closeLoyalty()" class="w-full text-gray-400 text-sm py-2">لا شكراً</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-green-800 text-green-200 text-center py-6 text-sm mt-8">
   <p class="font-bold text-white mb-1">💊 صيدلية الدواء النفيس</p>
-  <p>جميع الحقوق محفوظة © 2025</p>
+  <p>الرس، المملكة العربية السعودية &nbsp;|&nbsp; 📞 0539835556</p>
 </footer>
 
 <script>
-const SUPABASE_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
+const SB_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
+const WA = '966539835556';
+const ODOO = { url:'https://health-path.erp-ksa.aumet.com', db:'health-path.erp-ksa.aumet.com', user:'sami@aumet.com', pass:'Sami@1212' };
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let allOffers = [];
-let activeCat = 'all';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+let allOffers = [], activeFilter = 'all', loyalPhone = '';
+let cart = (() => { try { return JSON.parse(localStorage.getItem('aldawa_cart')||'[]'); } catch(e){ return []; } })();
 
+// ── INIT ──
 async function init() {
-  const { data } = await sb.from('offers')
-    .select('*, offer_images(*)')
-    .eq('in_stock', true)
-    .order('sort_order')
-    .order('id');
-
+  const { data } = await sb.from('offers').select('*, offer_images(*)').eq('in_stock', true).order('sort_order').order('id');
   allOffers = data || [];
   buildCatFilter();
   renderCards();
+  updateBadge();
   document.getElementById('loadingBox').classList.add('hidden');
   document.getElementById('grid').classList.remove('hidden');
 }
 
 function buildCatFilter() {
-  const cats = [...new Set(allOffers.map(o => o.category).filter(Boolean))];
-  const container = document.getElementById('catFilters');
+  const cats = [...new Set(allOffers.map(o=>o.category).filter(Boolean))];
+  const cont = document.getElementById('catFilters');
   cats.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.id = 'cat-' + cat;
-    btn.className = 'cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border flex-shrink-0';
-    btn.textContent = cat;
-    btn.onclick = () => filterCat(cat);
-    container.appendChild(btn);
+    const b = document.createElement('button');
+    b.id = 'f-' + cat;
+    b.className = 'cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border flex-shrink-0';
+    b.textContent = cat;
+    b.onclick = () => setFilter(cat);
+    cont.appendChild(b);
   });
 }
 
-function filterCat(cat) {
-  activeCat = cat;
+function setFilter(f) {
+  activeFilter = f;
   document.querySelectorAll('.cat-btn').forEach(b => {
-    b.className = 'cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border flex-shrink-0';
+    const isFeat = b.id === 'f-featured';
+    b.className = `cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold flex-shrink-0 ${isFeat ? 'bg-white text-amber-600 border border-amber-300' : 'bg-white text-gray-600 border'}`;
   });
-  const active = document.getElementById('cat-' + cat);
-  if (active) active.className = 'cat-btn active whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white flex-shrink-0';
+  const a = document.getElementById('f-' + f);
+  if(a) a.className = `cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold flex-shrink-0 ${f==='featured' ? 'bg-amber-400 text-amber-900' : 'bg-green-600 text-white'}`;
   renderCards();
 }
 
 function renderCards() {
   const q = document.getElementById('searchQ').value.trim().toLowerCase();
   let list = allOffers;
-  if (activeCat !== 'all') list = list.filter(o => o.category === activeCat);
+  if (activeFilter === 'featured') list = list.filter(o => o.featured);
+  else if (activeFilter !== 'all') list = list.filter(o => o.category === activeFilter);
   if (q) list = list.filter(o => o.name.toLowerCase().includes(q) || (o.brand||'').toLowerCase().includes(q));
 
   const grid = document.getElementById('grid');
   document.getElementById('emptyMsg').classList.toggle('hidden', list.length > 0);
+  const inCartIds = new Set(cart.map(c => c.id));
 
-  grid.innerHTML = list.map((o, idx) => {
-    const imgs = (o.offer_images || []).sort((a,b) => a.sort_order - b.sort_order);
-    const discount = o.original_price && o.offer_price
-      ? Math.round((1 - o.offer_price / o.original_price) * 100) : null;
-
-    const imgHtml = imgs.length > 1
-      ? `<div class="img-slider flex w-full h-full">
-          ${imgs.map(img => `<div class="img-slide w-full h-full flex-shrink-0"><img src="${img.image_url}" class="w-full h-full object-cover" /></div>`).join('')}
-         </div>`
-      : imgs.length === 1
-        ? `<img src="${imgs[0].image_url}" class="w-full h-full object-cover" />`
-        : `<div class="w-full h-full flex items-center justify-center text-5xl">💊</div>`;
-
-    return `
-    <div class="card bg-white rounded-2xl overflow-hidden shadow-sm fade-in ${!o.in_stock ? 'out-of-stock' : ''}" style="animation-delay:${idx*30}ms">
-      <!-- صورة المنتج -->
+  grid.innerHTML = list.map((o, i) => {
+    const imgs = (o.offer_images||[]).sort((a,b)=>a.sort_order-b.sort_order);
+    const thumb = imgs[0]?.image_url || null;
+    const disc = o.original_price && o.offer_price ? Math.round((1 - o.offer_price/o.original_price)*100) : null;
+    const added = inCartIds.has(o.id);
+    return `<div class="offer-card bg-white rounded-2xl overflow-hidden shadow-sm fade-up" style="animation-delay:${i*20}ms">
       <div class="relative bg-gray-100" style="height:160px">
-        ${imgHtml}
-        ${discount ? `<span class="absolute top-2 right-2 badge bg-red-500 text-white">-${discount}%</span>` : ''}
-        ${o.badge && !discount ? `<span class="absolute top-2 right-2 badge bg-amber-400 text-amber-900">${o.badge}</span>` : ''}
-        ${imgs.length > 1 ? `<div class="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-          ${imgs.map((_,i)=>`<div class="w-1.5 h-1.5 rounded-full ${i===0?'bg-white':'bg-white/40'}"></div>`).join('')}
-        </div>` : ''}
+        ${thumb ? `<img src="${thumb}" class="w-full h-full object-cover" loading="lazy"/>` : `<div class="w-full h-full flex items-center justify-center text-5xl">💊</div>`}
+        ${disc ? `<span class="absolute top-2 right-2 badge-pill bg-red-500 text-white">-${disc}%</span>` : ''}
+        ${o.featured ? `<span class="absolute top-2 left-2 badge-pill bg-amber-400 text-amber-900">⭐</span>` : ''}
       </div>
-
-      <!-- معلومات المنتج -->
       <div class="p-3">
-        ${o.brand ? `<p class="text-xs text-gray-400 mb-0.5">${o.brand}</p>` : ''}
+        ${o.brand ? `<p class="text-xs text-gray-400">${o.brand}</p>` : ''}
         <h3 class="font-bold text-gray-800 text-sm leading-snug mb-2">${o.name}</h3>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 mb-3">
           ${o.original_price ? `<span class="text-xs text-gray-400 line-through">${Number(o.original_price).toFixed(2)}</span>` : ''}
-          <span class="text-green-700 font-extrabold text-base">${Number(o.offer_price).toFixed(2)}</span>
-          <span class="text-xs text-gray-500">ر.س</span>
+          <span class="text-green-700 font-extrabold">${Number(o.offer_price).toFixed(2)}</span>
+          <span class="text-xs text-gray-400">ر.س</span>
         </div>
-        ${!o.in_stock ? `<p class="text-xs text-red-500 font-bold mt-1">نفد المخزون</p>` : ''}
+        <button id="btn-${o.id}" onclick="toggleCart(${o.id})"
+          class="w-full py-2 rounded-xl text-sm font-bold transition ${added ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-green-50'}">
+          ${added ? '✓ أُضيف' : '+ أضف للطلب'}
+        </button>
       </div>
     </div>`;
   }).join('');
+}
+
+// ── CART ──
+function toggleCart(id) {
+  const o = allOffers.find(x=>x.id===id);
+  if(!o) return;
+  const idx = cart.findIndex(c=>c.id===id);
+  if(idx>-1) cart.splice(idx,1);
+  else cart.push({id:o.id, name:o.name, price:o.offer_price});
+  localStorage.setItem('aldawa_cart', JSON.stringify(cart));
+  renderCards();
+  renderCartItems();
+  updateBadge();
+}
+
+function updateBadge() {
+  const b = document.getElementById('cartBadge');
+  b.textContent = cart.length;
+  b.style.display = cart.length > 0 ? 'flex' : 'none';
+}
+
+function renderCartItems() {
+  const c = document.getElementById('cartItems');
+  document.getElementById('cartCount').textContent = cart.length;
+  if(!cart.length) {
+    c.innerHTML = '<div class="text-center py-12 text-gray-400"><div class="text-5xl mb-3">🛒</div><p class="text-sm">طلبك فاضي</p></div>';
+    return;
+  }
+  c.innerHTML = cart.map(item=>`
+    <div class="flex items-start justify-between gap-2 bg-gray-50 rounded-xl p-3">
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-gray-800 leading-snug">${item.name}</p>
+        <p class="text-green-600 text-sm font-bold mt-1">${Number(item.price).toFixed(2)} ر.س</p>
+      </div>
+      <button onclick="toggleCart(${item.id})" class="text-red-400 hover:text-red-600 text-xl leading-none flex-shrink-0">x</button>
+    </div>`).join('');
+}
+
+function openCart() {
+  renderCartItems();
+  const p=document.getElementById('cartPanel'), ov=document.getElementById('cartOverlay');
+  ov.classList.remove('hidden');
+  setTimeout(()=>{ ov.classList.remove('opacity-0'); p.classList.add('open'); },10);
+  document.body.style.overflow='hidden';
+}
+
+function closeCart() {
+  const p=document.getElementById('cartPanel'), ov=document.getElementById('cartOverlay');
+  p.classList.remove('open');
+  ov.classList.add('opacity-0');
+  setTimeout(()=>ov.classList.add('hidden'),300);
+  document.body.style.overflow='';
+}
+
+function clearCart() {
+  cart=[];
+  localStorage.setItem('aldawa_cart','[]');
+  renderCards();
+  renderCartItems();
+  updateBadge();
+}
+
+function sendWhatsApp() {
+  if(!cart.length){ alert('أضف منتجات أولاً'); return; }
+  let msg='🛒 *طلب من موقع صيدلية الدواء النفيس*\n\n*العروض المطلوبة:*\n';
+  cart.forEach((item,i)=>{ msg+=`${i+1}. ${item.name} — ${Number(item.price).toFixed(2)} ر.س\n`; });
+  msg+='\n_أرجو التأكيد على الطلب_ 🙏';
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ── LOYALTY ──
+function openLoyalty() {
+  document.getElementById('loyaltyModal').classList.remove('hidden');
+  showStep(1);
+  document.getElementById('loyalPhone').value='';
+  document.getElementById('loyalErr').classList.add('hidden');
+  loyalPhone='';
+}
+function closeLoyalty() { document.getElementById('loyaltyModal').classList.add('hidden'); }
+function showStep(n) {
+  [1,2,3].forEach(i => document.getElementById('loyalStep'+i).classList.toggle('hidden', i!==n));
+}
+function toggleCond(id) { document.getElementById(id).classList.toggle('show'); }
+
+async function checkLoyalty() {
+  const phone = document.getElementById('loyalPhone').value.trim();
+  const err = document.getElementById('loyalErr');
+  const btn = document.getElementById('loyalBtn');
+  if(phone.length < 9) { err.textContent='أدخل رقم جوال صحيح'; err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  btn.textContent='⏳ جاري الاستعلام...'; btn.disabled=true;
+  loyalPhone = phone;
+  try {
+    // Auth
+    const authR = await fetch(`${ODOO.url}/xmlrpc/2/common`, {
+      method:'POST', headers:{'Content-Type':'text/xml'},
+      body:`<?xml version="1.0"?><methodCall><methodName>authenticate</methodName><params><param><value><string>${ODOO.db}</string></value></param><param><value><string>${ODOO.user}</string></value></param><param><value><string>${ODOO.pass}</string></value></param><param><value><struct></struct></value></param></params></methodCall>`
+    });
+    const authT = await authR.text();
+    const uid = authT.match(/<int>(\d+)<\/int>/)?.[1];
+    if(!uid) throw new Error('auth');
+
+    // Search by phone variants
+    const variants = [phone, phone.replace(/^0/,'+966'), phone.replace(/^0/,'966')];
+    let points = null;
+    for(const ph of variants) {
+      const r = await fetch(`${ODOO.url}/xmlrpc/2/object`, {
+        method:'POST', headers:{'Content-Type':'text/xml'},
+        body:`<?xml version="1.0"?><methodCall><methodName>execute_kw</methodName><params><param><value><string>${ODOO.db}</string></value></param><param><value><int>${uid}</int></value></param><param><value><string>${ODOO.pass}</string></value></param><param><value><string>res.partner</string></value></param><param><value><string>search_read</string></value></param><param><value><array><data><value><array><data><value><array><data><value><string>phone</string></value><value><string>=</string></value><value><string>${ph}</string></value></data></array></value></data></array></value></data></array></value></param><param><value><struct><member><name>fields</name><value><array><data><value><string>remaining_points</string></value></data></array></value></member><member><name>limit</name><value><int>1</int></value></member></struct></value></param></params></methodCall>`
+      });
+      const txt = await r.text();
+      if(txt.includes('remaining_points')) {
+        const m = txt.match(/<name>remaining_points<\/name>\s*<value>\s*<(?:int|i4)>(\d+)<\/(?:int|i4)>/);
+        points = m ? parseInt(m[1]) : 0;
+        break;
+      }
+    }
+    if(points !== null) {
+      document.getElementById('loyalPoints').textContent = points;
+      showStep(2);
+    } else {
+      showStep(3);
+    }
+  } catch(e) {
+    err.textContent='حدث خطأ، حاول مرة ثانية'; err.classList.remove('hidden');
+  } finally {
+    btn.textContent='استعلم عن نقاطي'; btn.disabled=false;
+  }
+}
+
+function sendLoyaltyInfo() {
+  const name = document.getElementById('lName').value.trim();
+  const email = document.getElementById('lEmail').value.trim();
+  const note = document.getElementById('lNote').value.trim();
+  const checks = [...document.querySelectorAll('.hc:checked')].map(c=>c.value);
+  if(document.getElementById('hcDrug').checked) {
+    const d=document.getElementById('hcDrugTxt').value.trim();
+    checks.push(d ? 'حساسية أدوية: '+d : 'حساسية أدوية');
+  }
+  if(document.getElementById('hcFood').checked) {
+    const d=document.getElementById('hcFoodTxt').value.trim();
+    checks.push(d ? 'حساسية غذائية: '+d : 'حساسية غذائية');
+  }
+  if(document.getElementById('hcMed').checked) {
+    const d=document.getElementById('hcMedTxt').value.trim();
+    checks.push(d ? 'أدوية دائمة: '+d : 'أدوية دائمة');
+  }
+  let msg=`📋 *معلومات عميل ولاء*\n\n📱 الرقم: ${loyalPhone}\n`;
+  if(name) msg+=`👤 الاسم المفضل: ${name}\n`;
+  if(email) msg+=`📧 الإيميل: ${email}\n`;
+  if(checks.length) msg+=`\n🏥 *المعلومات الصحية:*\n${checks.map(c=>`• ${c}`).join('\n')}\n`;
+  if(note) msg+=`\n📝 ملاحظات: ${note}\n`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeLoyalty();
+}
+
+function registerLoyalty() {
+  const msg=`📋 *طلب تسجيل ولاء جديد*\n\n📱 الرقم: ${loyalPhone}\n\nأرغب في الانضمام لبرنامج الولاء 🙏`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeLoyalty();
 }
 
 init();

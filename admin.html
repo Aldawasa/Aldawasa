@@ -213,6 +213,11 @@
         <input id="fInStock" type="checkbox" checked class="w-5 h-5 accent-green-600 cursor-pointer" />
         <label for="fInStock" class="text-sm font-bold text-gray-700 cursor-pointer">المنتج متوفر في المخزون</label>
       </div>
+      <!-- مميز -->
+      <div class="flex items-center gap-3 bg-amber-50 rounded-xl px-4 py-3">
+        <input id="fFeatured" type="checkbox" class="w-5 h-5 accent-amber-500 cursor-pointer" />
+        <label for="fFeatured" class="text-sm font-bold text-amber-700 cursor-pointer">⭐ عرض مميز (يظهر في فلتر المميزة)</label>
+      </div>
 
       <!-- أزرار -->
       <div class="flex gap-3 pt-2">
@@ -386,6 +391,7 @@ function openAddModal() {
   document.getElementById('fOfferPrice').value = '';
   document.getElementById('fSortOrder').value = '0';
   document.getElementById('fInStock').checked = true;
+  document.getElementById('fFeatured').checked = false;
   document.getElementById('existingImages').innerHTML = '';
   document.getElementById('newImagesPreview').innerHTML = '';
   document.getElementById('imgInput').value = '';
@@ -409,6 +415,7 @@ async function openEditModal(id) {
   document.getElementById('fOfferPrice').value = offer.offer_price || '';
   document.getElementById('fSortOrder').value = offer.sort_order || 0;
   document.getElementById('fInStock').checked = offer.in_stock !== false;
+  document.getElementById('fFeatured').checked = offer.featured === true;
   document.getElementById('newImagesPreview').innerHTML = '';
   document.getElementById('imgInput').value = '';
   document.getElementById('saveErr').classList.add('hidden');
@@ -537,6 +544,7 @@ async function saveOffer() {
       original_price: document.getElementById('fOrigPrice').value || null,
       offer_price: offerPrice,
       in_stock: document.getElementById('fInStock').checked,
+        featured: document.getElementById('fFeatured').checked,
       sort_order: parseInt(document.getElementById('fSortOrder').value) || 0,
     };
 
