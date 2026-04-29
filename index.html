@@ -277,6 +277,47 @@
   </div>
 </div>
 
+
+<!-- ===== PRODUCT DETAIL MODAL ===== -->
+<div id="productModal" class="modal-back hidden" onclick="if(event.target===this)closeProduct()">
+  <div class="modal-box" style="max-width:520px;padding:0;overflow:hidden">
+    <!-- Image slider -->
+    <div id="prodImgSlider" class="relative bg-gray-100" style="height:260px">
+      <div id="prodImgs" class="flex h-full overflow-x-auto" style="scroll-snap-type:x mandatory;scrollbar-width:none"></div>
+      <div id="prodDots" class="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5"></div>
+      <button onclick="closeProduct()" class="absolute top-3 right-3 bg-black/50 text-white w-8 h-8 rounded-full text-lg leading-none flex items-center justify-center">×</button>
+      <button id="prodShareBtn" onclick="shareProduct()" class="absolute top-3 left-3 bg-black/50 text-white w-8 h-8 rounded-full text-sm leading-none flex items-center justify-center">🔗</button>
+    </div>
+    <!-- Info -->
+    <div class="p-5">
+      <p id="prodBrand" class="text-xs text-gray-400 mb-1"></p>
+      <h2 id="prodName" class="text-lg font-extrabold text-gray-800 mb-1"></h2>
+      <p id="prodCategory" class="text-xs text-gray-400 mb-3"></p>
+      <div class="flex items-center gap-3 mb-4">
+        <span id="prodOrigPrice" class="text-sm text-gray-400 line-through hidden"></span>
+        <span id="prodPrice" class="text-2xl font-extrabold text-green-700"></span>
+        <span class="text-sm text-gray-400">ر.س</span>
+        <span id="prodDiscount" class="badge-pill bg-red-500 text-white hidden"></span>
+      </div>
+      <div class="flex gap-3">
+        <button id="prodCartBtn" onclick="toggleCartFromModal()" class="flex-1 py-3 rounded-2xl text-sm font-bold transition bg-green-600 text-white hover:bg-green-700">
+          + أضف للطلب
+        </button>
+        <button onclick="shareProduct()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-2xl text-sm font-bold transition">
+          🔗 شارك
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FLOATING WHATSAPP BUTTON ===== -->
+<a href="https://wa.me/966539835556" target="_blank"
+  class="fixed bottom-6 left-6 z-40 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl flex items-center justify-center transition"
+  style="width:56px;height:56px;font-size:26px" title="تواصل معنا">
+  💬
+</a>
+
 <!-- FOOTER -->
 <footer class="bg-green-800 text-green-200 text-center py-6 text-sm mt-8">
   <p class="font-bold text-white mb-1">💊 صيدلية الدواء النفيس</p>
@@ -345,7 +386,7 @@ function renderCards() {
     const disc = o.original_price && o.offer_price ? Math.round((1 - o.offer_price/o.original_price)*100) : null;
     const added = inCartIds.has(o.id);
     return `<div class="offer-card bg-white rounded-2xl overflow-hidden shadow-sm fade-up" style="animation-delay:${i*20}ms">
-      <div class="relative bg-gray-100" style="height:160px">
+      <div class="relative bg-gray-100 cursor-pointer" style="height:160px" onclick="openProduct(${o.id})">
         ${thumb ? `<img src="${thumb}" class="w-full h-full object-cover" loading="lazy"/>` : `<div class="w-full h-full flex items-center justify-center text-5xl">💊</div>`}
         ${disc ? `<span class="absolute top-2 right-2 badge-pill bg-red-500 text-white">-${disc}%</span>` : ''}
         ${o.featured ? `<span class="absolute top-2 left-2 badge-pill bg-amber-400 text-amber-900">⭐</span>` : ''}
@@ -365,6 +406,92 @@ function renderCards() {
       </div>
     </div>`;
   }).join('');
+}
+
+
+// ── PRODUCT MODAL ──
+let currentProductId = null;
+
+function openProduct(id) {
+  const o = allOffers.find(x => x.id === id);
+  if (!o) return;
+  currentProductId = id;
+
+  // Images
+  const imgs = (o.offer_images || []).sort((a,b) => a.sort_order - b.sort_order);
+  const slider = document.getElementById('prodImgs');
+  const dots = document.getElementById('prodDots');
+
+  if (imgs.length > 0) {
+    slider.innerHTML = imgs.map(img =>
+      `<div style="min-width:100%;height:100%;scroll-snap-align:start;flex-shrink:0">
+        <img src="${img.image_url}" style="width:100%;height:100%;object-fit:cover"/>
+      </div>`
+    ).join('');
+    dots.innerHTML = imgs.map((_, i) =>
+      `<div class="w-2 h-2 rounded-full ${i===0?'bg-white':'bg-white/40'}"></div>`
+    ).join('');
+    dots.style.display = imgs.length > 1 ? 'flex' : 'none';
+  } else {
+    slider.innerHTML = `<div style="min-width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:64px">💊</div>`;
+    dots.innerHTML = '';
+  }
+
+  // Info
+  document.getElementById('prodBrand').textContent = o.brand || '';
+  document.getElementById('prodName').textContent = o.name;
+  document.getElementById('prodCategory').textContent = o.category || '';
+  document.getElementById('prodPrice').textContent = Number(o.offer_price).toFixed(2);
+
+  const origEl = document.getElementById('prodOrigPrice');
+  if (o.original_price) { origEl.textContent = Number(o.original_price).toFixed(2); origEl.classList.remove('hidden'); }
+  else origEl.classList.add('hidden');
+
+  const discEl = document.getElementById('prodDiscount');
+  if (o.original_price && o.offer_price) {
+    const d = Math.round((1 - o.offer_price / o.original_price) * 100);
+    discEl.textContent = '-' + d + '%'; discEl.classList.remove('hidden');
+  } else discEl.classList.add('hidden');
+
+  updateModalCartBtn();
+  document.getElementById('productModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function updateModalCartBtn() {
+  const btn = document.getElementById('prodCartBtn');
+  const inCart = cart.find(c => c.id === currentProductId);
+  if (inCart) {
+    btn.textContent = '✓ أُضيف للطلب';
+    btn.className = 'flex-1 py-3 rounded-2xl text-sm font-bold transition bg-gray-200 text-gray-600';
+  } else {
+    btn.textContent = '+ أضف للطلب';
+    btn.className = 'flex-1 py-3 rounded-2xl text-sm font-bold transition bg-green-600 text-white hover:bg-green-700';
+  }
+}
+
+function toggleCartFromModal() {
+  if (!currentProductId) return;
+  toggleCart(currentProductId);
+  updateModalCartBtn();
+}
+
+function closeProduct() {
+  document.getElementById('productModal').classList.add('hidden');
+  document.body.style.overflow = '';
+  currentProductId = null;
+}
+
+// ── SHARE ──
+function shareProduct() {
+  const o = allOffers.find(x => x.id === currentProductId);
+  if (!o) return;
+  const text = `💊 *عرض من صيدلية الدواء النفيس*\n\n${o.name}\n💰 السعر: ${Number(o.offer_price).toFixed(2)} ر.س${o.original_price ? ' (بدلاً من ' + Number(o.original_price).toFixed(2) + ')' : ''}\n\n🛒 اطلب الآن: https://aldawa.sa`;
+  if (navigator.share) {
+    navigator.share({ title: o.name, text, url: 'https://aldawa.sa' }).catch(()=>{});
+  } else {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
 }
 
 // ── CART ──
