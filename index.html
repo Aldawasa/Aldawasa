@@ -195,13 +195,82 @@
       <button onclick="closeLoyalty()" class="w-full text-gray-400 text-sm py-2">إغلاق بدون إرسال</button>
     </div>
 
-    <!-- Step 3: not found -->
-    <div id="loyalStep3" class="hidden text-center">
-      <div class="text-4xl mb-3">📋</div>
-      <h2 class="text-lg font-bold text-gray-800 mb-2">رقمك غير مسجل</h2>
-      <p class="text-gray-500 text-sm mb-5">تبي تسجل في برنامج الولاء وتبدأ تجمع نقاط؟</p>
+    <!-- Step 3: not found → show registration form -->
+    <div id="loyalStep3" class="hidden">
+      <div class="text-center mb-4">
+        <div class="text-4xl mb-2">📋</div>
+        <h2 class="text-lg font-bold text-gray-800">رقمك غير مسجل</h2>
+        <p class="text-gray-500 text-sm mt-1">سجّل الآن وابدأ تجمع نقاط ولاء 🎁</p>
+      </div>
+
+      <div class="bg-green-50 rounded-2xl p-4 mb-4">
+        <p class="text-sm font-bold text-green-800 mb-1">💚 أضف معلوماتك — كلها اختيارية تماماً</p>
+        <p class="text-xs text-gray-400 mb-3">كل حقل تملأه يساعدنا نخدمك أفضل، ولكن يمكنك التسجيل بالرقم فقط</p>
+
+        <div class="mb-3">
+          <label class="text-xs text-gray-500 mb-1 block">الاسم الذي تريد أن يظهر للصيدلية</label>
+          <input id="rName" type="text" placeholder="مثال: أبو محمد"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400" />
+        </div>
+        <div class="mb-3">
+          <label class="text-xs text-gray-500 mb-1 block">البريد الإلكتروني</label>
+          <input id="rEmail" type="email" placeholder="example@email.com"
+            class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-2 block">معلومات صحية تساعدنا في خدمتك</label>
+          <div class="space-y-1 text-sm">
+            <p class="text-xs text-gray-400 font-bold">الحالات المزمنة</p>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="ضغط الدم"> ضغط الدم</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="السكري"> السكري</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="أمراض القلب"> أمراض القلب</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="أمراض الكلى"> أمراض الكلى</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="الغدة الدرقية"> الغدة الدرقية</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="الربو"> الربو أو أمراض التنفس</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="أمراض المفاصل"> أمراض المفاصل والعظام</label>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">الحساسيات</p>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="rcDrug" onchange="toggleCond('rcdDrug')"> حساسية من أدوية معينة
+            </label>
+            <div id="rcdDrug" class="cond-field pr-4">
+              <input id="rcDrugTxt" type="text" placeholder="اكتب الأدوية (اختياري)"
+                class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm mt-1 focus:outline-none focus:border-green-400"/>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="حساسية جلدية"> حساسية جلدية</label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="rcFood" onchange="toggleCond('rcdFood')"> حساسية غذائية
+            </label>
+            <div id="rcdFood" class="cond-field pr-4">
+              <input id="rcFoodTxt" type="text" placeholder="اكتب الأطعمة (اختياري)"
+                class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm mt-1 focus:outline-none focus:border-green-400"/>
+            </div>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">حالات خاصة</p>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="حامل"> حامل</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="مرضعة"> مرضعة</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="كبار السن +65"> كبار السن (فوق 65)</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="أطفال في المنزل"> أطفال دون 12 في المنزل</label>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">الأدوية والمكملات</p>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="rcMed" onchange="toggleCond('rcdMed')"> أدوية دائمة
+            </label>
+            <div id="rcdMed" class="cond-field pr-4">
+              <input id="rcMedTxt" type="text" placeholder="اذكر الأدوية (اختياري)"
+                class="w-full border border-gray-200 rounded-xl px-3 py-1.5 text-sm mt-1 focus:outline-none focus:border-green-400"/>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rc" value="مكملات غذائية"> مكملات غذائية بانتظام</label>
+
+            <p class="text-xs text-gray-400 font-bold pt-2">ملاحظة إضافية</p>
+            <textarea id="rNote" placeholder="أي معلومة تبي تشاركنا إياها..." rows="2"
+              class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green-400 resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+
       <button onclick="registerLoyalty()" class="w-full bg-green-600 text-white py-3 rounded-2xl font-bold hover:bg-green-700 transition mb-2">
-        ✅ سجلني في برنامج الولاء
+        💬 أرسل طلب التسجيل للصيدلية
       </button>
       <button onclick="closeLoyalty()" class="w-full text-gray-400 text-sm py-2">لا شكراً</button>
     </div>
@@ -435,7 +504,28 @@ function sendLoyaltyInfo() {
 }
 
 function registerLoyalty() {
-  const msg=`📋 *طلب تسجيل ولاء جديد*\n\n📱 الرقم: ${loyalPhone}\n\nأرغب في الانضمام لبرنامج الولاء 🙏`;
+  const name = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const note = document.getElementById('rNote').value.trim();
+  const checks = [...document.querySelectorAll('.rc:checked')].map(c=>c.value);
+  if(document.getElementById('rcDrug').checked) {
+    const d=document.getElementById('rcDrugTxt').value.trim();
+    checks.push(d ? 'حساسية أدوية: '+d : 'حساسية أدوية');
+  }
+  if(document.getElementById('rcFood').checked) {
+    const d=document.getElementById('rcFoodTxt').value.trim();
+    checks.push(d ? 'حساسية غذائية: '+d : 'حساسية غذائية');
+  }
+  if(document.getElementById('rcMed').checked) {
+    const d=document.getElementById('rcMedTxt').value.trim();
+    checks.push(d ? 'أدوية دائمة: '+d : 'أدوية دائمة');
+  }
+  let msg=`📋 *طلب تسجيل ولاء جديد*\n\n📱 الرقم: ${loyalPhone}\n`;
+  if(name) msg+=`👤 الاسم المفضل: ${name}\n`;
+  if(email) msg+=`📧 الإيميل: ${email}\n`;
+  if(checks.length) msg+=`\n🏥 *المعلومات الصحية:*\n${checks.map(c=>`• ${c}`).join('\n')}\n`;
+  if(note) msg+=`\n📝 ملاحظات: ${note}\n`;
+  msg+='\n_أرغب في الانضمام لبرنامج الولاء_ 🙏';
   window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
   closeLoyalty();
 }
