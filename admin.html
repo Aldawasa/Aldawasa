@@ -52,7 +52,7 @@
 </div>
 
 <!-- الصفحة الرئيسية -->
-<div id="mainApp" class="hidden">
+<div id="mainApp" style="display:none">
 
   <!-- شريط علوي -->
   <header class="bg-white shadow-sm sticky top-0 z-30">
@@ -248,7 +248,7 @@
 <script>
 const SUPABASE_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
-const ADMIN_PASS = '1234';
+const ADMIN_PASS = 'admin';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -263,18 +263,18 @@ let imagesToDelete = []; // { id, image_url }
 function doLogin() {
   const pass = document.getElementById('passInput').value;
   if (pass === ADMIN_PASS) {
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
     loadOffers();
   } else {
-    document.getElementById('loginErr').classList.remove('hidden');
+    document.getElementById('loginErr').style.display = 'block';
     document.getElementById('passInput').value = '';
     document.getElementById('passInput').focus();
   }
 }
 function doLogout() {
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
   document.getElementById('passInput').value = '';
 }
 
