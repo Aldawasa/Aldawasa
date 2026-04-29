@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>عروض صيدلية الدواء النفيس</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+    * { font-family: 'Tajawal', sans-serif; }
+    .card { transition: transform .15s, box-shadow .15s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,.1); }
+    .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+    .spinner { border:4px solid #e5e7eb; border-top:4px solid #059669; border-radius:50%; width:40px; height:40px; animation:spin .8s linear infinite; margin:0 auto; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .img-slider { overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+    .img-slider::-webkit-scrollbar { display:none; }
+    .img-slide { scroll-snap-align:start; flex-shrink:0; }
+    .out-of-stock { filter: grayscale(60%); opacity: 0.7; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+    .fade-in { animation: fadeIn .35s ease forwards; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- رأس الصفحة -->
+<header class="bg-gradient-to-l from-green-700 to-emerald-600 text-white sticky top-0 z-20 shadow-lg">
+  <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl">💊</span>
+      <div>
+        <h1 class="font-extrabold text-lg leading-tight">صيدلية الدواء النفيس</h1>
+        <p class="text-green-200 text-xs">أفضل العروض بأقل الأسعار</p>
+      </div>
+    </div>
+    <div class="text-left">
+      <p class="text-green-200 text-xs">اتصل بنا</p>
+      <a href="tel:+966" class="font-bold text-sm text-white">📞 اتصل الآن</a>
+    </div>
+  </div>
+</header>
+
+<!-- بانر -->
+<div class="bg-amber-400 text-amber-900 text-center py-2 text-sm font-bold">
+  🔥 عروض محدودة – اطلب الآن قبل نفاد الكمية!
+</div>
+
+<!-- فلتر الفئات -->
+<div class="max-w-5xl mx-auto px-4 pt-5">
+  <div id="catFilters" class="flex gap-2 overflow-x-auto pb-2 hide-scroll">
+    <button onclick="filterCat('all')" id="cat-all"
+      class="cat-btn active whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white flex-shrink-0">
+      🏷️ الكل
+    </button>
+  </div>
+</div>
+
+<!-- البحث -->
+<div class="max-w-5xl mx-auto px-4 mt-3 mb-4">
+  <input id="searchQ" type="text" placeholder="🔍  ابحث عن منتج..."
+    oninput="renderCards()"
+    class="w-full border border-gray-200 bg-white rounded-2xl px-5 py-3 focus:outline-none focus:border-green-400 shadow-sm" />
+</div>
+
+<!-- بطاقات المنتجات -->
+<main class="max-w-5xl mx-auto px-4 pb-12">
+  <div id="loadingBox" class="py-16 text-center"><div class="spinner"></div><p class="text-gray-400 mt-4 text-sm">جاري تحميل العروض...</p></div>
+  <div id="grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+  <p id="emptyMsg" class="hidden text-center text-gray-400 py-16 text-lg">لا توجد عروض حالياً 😔</p>
+</main>
+
+<!-- Footer -->
+<footer class="bg-green-800 text-green-200 text-center py-6 text-sm">
+  <p class="font-bold text-white mb-1">💊 صيدلية الدواء النفيس</p>
+  <p>جميع الحقوق محفوظة © 2025</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let allOffers = [];
+let activeCat = 'all';
+
+async function init() {
+  const { data } = await sb.from('offers')
+    .select('*, offer_images(*)')
+    .eq('in_stock', true)
+    .order('sort_order')
+    .order('id');
+
+  allOffers = data || [];
+  buildCatFilter();
+  renderCards();
+  document.getElementById('loadingBox').classList.add('hidden');
+  document.getElementById('grid').classList.remove('hidden');
+}
+
+function buildCatFilter() {
+  const cats = [...new Set(allOffers.map(o => o.category).filter(Boolean))];
+  const container = document.getElementById('catFilters');
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.id = 'cat-' + cat;
+    btn.className = 'cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border flex-shrink-0';
+    btn.textContent = cat;
+    btn.onclick = () => filterCat(cat);
+    container.appendChild(btn);
+  });
+}
+
+function filterCat(cat) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.className = 'cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-gray-600 border flex-shrink-0';
+  });
+  const active = document.getElementById('cat-' + cat);
+  if (active) active.className = 'cat-btn active whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white flex-shrink-0';
+  renderCards();
+}
+
+function renderCards() {
+  const q = document.getElementById('searchQ').value.trim().toLowerCase();
+  let list = allOffers;
+  if (activeCat !== 'all') list = list.filter(o => o.category === activeCat);
+  if (q) list = list.filter(o => o.name.toLowerCase().includes(q) || (o.brand||'').toLowerCase().includes(q));
+
+  const grid = document.getElementById('grid');
+  document.getElementById('emptyMsg').classList.toggle('hidden', list.length > 0);
+
+  grid.innerHTML = list.map((o, idx) => {
+    const imgs = (o.offer_images || []).sort((a,b) => a.sort_order - b.sort_order);
+    const discount = o.original_price && o.offer_price
+      ? Math.round((1 - o.offer_price / o.original_price) * 100) : null;
+
+    const imgHtml = imgs.length > 1
+      ? `<div class="img-slider flex w-full h-full">
+          ${imgs.map(img => `<div class="img-slide w-full h-full flex-shrink-0"><img src="${img.image_url}" class="w-full h-full object-cover" /></div>`).join('')}
+         </div>`
+      : imgs.length === 1
+        ? `<img src="${imgs[0].image_url}" class="w-full h-full object-cover" />`
+        : `<div class="w-full h-full flex items-center justify-center text-5xl">💊</div>`;
+
+    return `
+    <div class="card bg-white rounded-2xl overflow-hidden shadow-sm fade-in ${!o.in_stock ? 'out-of-stock' : ''}" style="animation-delay:${idx*30}ms">
+      <!-- صورة المنتج -->
+      <div class="relative bg-gray-100" style="height:160px">
+        ${imgHtml}
+        ${discount ? `<span class="absolute top-2 right-2 badge bg-red-500 text-white">-${discount}%</span>` : ''}
+        ${o.badge && !discount ? `<span class="absolute top-2 right-2 badge bg-amber-400 text-amber-900">${o.badge}</span>` : ''}
+        ${imgs.length > 1 ? `<div class="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+          ${imgs.map((_,i)=>`<div class="w-1.5 h-1.5 rounded-full ${i===0?'bg-white':'bg-white/40'}"></div>`).join('')}
+        </div>` : ''}
+      </div>
+
+      <!-- معلومات المنتج -->
+      <div class="p-3">
+        ${o.brand ? `<p class="text-xs text-gray-400 mb-0.5">${o.brand}</p>` : ''}
+        <h3 class="font-bold text-gray-800 text-sm leading-snug mb-2">${o.name}</h3>
+        <div class="flex items-center gap-2">
+          ${o.original_price ? `<span class="text-xs text-gray-400 line-through">${Number(o.original_price).toFixed(2)}</span>` : ''}
+          <span class="text-green-700 font-extrabold text-base">${Number(o.offer_price).toFixed(2)}</span>
+          <span class="text-xs text-gray-500">ر.س</span>
+        </div>
+        ${!o.in_stock ? `<p class="text-xs text-red-500 font-bold mt-1">نفد المخزون</p>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>

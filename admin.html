@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة الإدارة – صيدلية الدواء النفيس</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+    * { font-family: 'Tajawal', sans-serif; }
+    .img-card { position: relative; }
+    .img-card .del-btn {
+      position: absolute; top: 4px; left: 4px;
+      background: rgba(220,38,38,0.9); color: white;
+      border: none; border-radius: 50%;
+      width: 26px; height: 26px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: bold;
+    }
+    .img-card .primary-badge {
+      position: absolute; bottom: 4px; right: 4px;
+      background: rgba(22,163,74,0.9); color: white;
+      font-size: 10px; padding: 2px 6px; border-radius: 4px;
+    }
+    .drag-over { border: 2px dashed #16a34a !important; background: #f0fdf4; }
+    .modal-backdrop { position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:flex;align-items:center;justify-content:center; }
+    .modal-box { background:white;border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px;margin:16px; }
+    #loginScreen { position:fixed;inset:0;background:linear-gradient(135deg,#065f46,#047857);z-index:100;display:flex;align-items:center;justify-content:center; }
+    .spinner { border:3px solid #e5e7eb;border-top:3px solid #059669;border-radius:50%;width:32px;height:32px;animation:spin .8s linear infinite;margin:0 auto; }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .badge-pill { display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- شاشة الدخول -->
+<div id="loginScreen">
+  <div class="bg-white rounded-2xl p-8 w-80 shadow-2xl text-center">
+    <div class="text-4xl mb-4">💊</div>
+    <h1 class="text-xl font-bold text-gray-800 mb-1">صيدلية الدواء النفيس</h1>
+    <p class="text-gray-500 text-sm mb-6">لوحة الإدارة</p>
+    <input id="passInput" type="password" placeholder="كلمة المرور"
+      class="w-full border border-gray-300 rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-green-500 mb-4"
+      onkeydown="if(event.key==='Enter')doLogin()" />
+    <button onclick="doLogin()"
+      class="w-full bg-green-600 text-white rounded-xl py-3 font-bold hover:bg-green-700 transition">
+      دخول
+    </button>
+    <p id="loginErr" class="text-red-500 text-sm mt-3 hidden">كلمة المرور غلط</p>
+  </div>
+</div>
+
+<!-- الصفحة الرئيسية -->
+<div id="mainApp" class="hidden">
+
+  <!-- شريط علوي -->
+  <header class="bg-white shadow-sm sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">💊</span>
+        <div>
+          <h1 class="font-bold text-gray-800 text-base leading-tight">صيدلية الدواء النفيس</h1>
+          <p class="text-green-600 text-xs">لوحة إدارة العروض</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <a href="/" target="_blank" class="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition">🌐 الموقع</a>
+        <button onclick="doLogout()" class="text-sm bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- إحصائيات سريعة -->
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm">
+        <div id="statTotal" class="text-2xl font-bold text-gray-800">—</div>
+        <div class="text-xs text-gray-500 mt-1">إجمالي العروض</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm">
+        <div id="statInStock" class="text-2xl font-bold text-green-600">—</div>
+        <div class="text-xs text-gray-500 mt-1">متوفر</div>
+      </div>
+      <div class="bg-white rounded-xl p-4 text-center shadow-sm">
+        <div id="statNoImg" class="text-2xl font-bold text-amber-500">—</div>
+        <div class="text-xs text-gray-500 mt-1">بدون صورة</div>
+      </div>
+    </div>
+
+    <!-- شريط البحث والإضافة -->
+    <div class="flex gap-3 mb-4">
+      <input id="searchInput" type="text" placeholder="🔍  بحث عن منتج..."
+        oninput="renderList()"
+        class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500 bg-white" />
+      <button onclick="openAddModal()"
+        class="bg-green-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-green-700 transition flex items-center gap-2 whitespace-nowrap">
+        <span class="text-lg">+</span> إضافة عرض
+      </button>
+    </div>
+
+    <!-- فلتر -->
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+      <button onclick="setFilter('all')" id="fAll" class="filter-btn active px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap bg-green-600 text-white">الكل</button>
+      <button onclick="setFilter('instock')" id="fInstock" class="filter-btn px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap bg-white text-gray-600 border">متوفر</button>
+      <button onclick="setFilter('noimg')" id="fNoimg" class="filter-btn px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap bg-white text-gray-600 border">بدون صورة</button>
+    </div>
+
+    <!-- جدول المنتجات -->
+    <div id="loadingSpinner" class="py-12"><div class="spinner"></div></div>
+    <div id="offersList" class="hidden space-y-3"></div>
+    <p id="emptyMsg" class="text-center text-gray-400 py-10 hidden">لا توجد نتائج</p>
+
+  </div>
+</div>
+
+<!-- Modal الإضافة/التعديل -->
+<div id="editModal" class="modal-backdrop hidden" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5">
+      <h2 id="modalTitle" class="text-lg font-bold text-gray-800">إضافة عرض جديد</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">×</button>
+    </div>
+
+    <div class="space-y-4">
+      <!-- الصور -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">📸 الصور</label>
+        
+        <!-- صور موجودة -->
+        <div id="existingImages" class="flex flex-wrap gap-2 mb-3"></div>
+
+        <!-- رفع صور جديدة -->
+        <div id="dropZone"
+          class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:border-green-400 transition"
+          onclick="document.getElementById('imgInput').click()"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleDrop(event)">
+          <div class="text-3xl mb-1">📁</div>
+          <p class="text-sm text-gray-500">اضغط لرفع صور أو اسحب وأفلت هنا</p>
+          <p class="text-xs text-gray-400 mt-1">يمكن رفع أكثر من صورة</p>
+        </div>
+        <input id="imgInput" type="file" accept="image/*" multiple class="hidden" onchange="handleImgSelect(event)" />
+
+        <!-- معاينة الصور الجديدة -->
+        <div id="newImagesPreview" class="flex flex-wrap gap-2 mt-3"></div>
+        
+        <div id="uploadProgress" class="hidden mt-2">
+          <div class="bg-gray-200 rounded-full h-2">
+            <div id="progressBar" class="bg-green-500 h-2 rounded-full transition-all" style="width:0%"></div>
+          </div>
+          <p class="text-xs text-gray-500 mt-1 text-center" id="progressText">جاري الرفع...</p>
+        </div>
+      </div>
+
+      <!-- اسم المنتج -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">اسم المنتج *</label>
+        <input id="fName" type="text" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500" placeholder="مثال: فازلين جلي 250ml" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <!-- الماركة -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">الماركة</label>
+          <input id="fBrand" type="text" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500" placeholder="مثال: Vaseline" />
+        </div>
+        <!-- الفئة -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">الفئة</label>
+          <select id="fCategory" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500">
+            <option value="أخرى">أخرى</option>
+            <option value="عناية بالبشرة">عناية بالبشرة</option>
+            <option value="عناية بالشعر">عناية بالشعر</option>
+            <option value="عناية بالجسم">عناية بالجسم</option>
+            <option value="عناية بالفم">عناية بالفم</option>
+            <option value="أدوية">أدوية</option>
+            <option value="مكملات غذائية">مكملات غذائية</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <!-- السعر الأصلي -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">السعر الأصلي (ريال)</label>
+          <input id="fOrigPrice" type="number" step="0.01" min="0" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500" placeholder="0.00" />
+        </div>
+        <!-- سعر العرض -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">سعر العرض (ريال) *</label>
+          <input id="fOfferPrice" type="number" step="0.01" min="0" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <!-- الشارة -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">شارة العرض</label>
+          <input id="fBadge" type="text" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500" placeholder="مثال: خصم 20%" />
+        </div>
+        <!-- الترتيب -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-1">الترتيب</label>
+          <input id="fSortOrder" type="number" min="0" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:border-green-500" placeholder="0" value="0" />
+        </div>
+      </div>
+
+      <!-- متوفر -->
+      <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+        <input id="fInStock" type="checkbox" checked class="w-5 h-5 accent-green-600 cursor-pointer" />
+        <label for="fInStock" class="text-sm font-bold text-gray-700 cursor-pointer">المنتج متوفر في المخزون</label>
+      </div>
+
+      <!-- أزرار -->
+      <div class="flex gap-3 pt-2">
+        <button onclick="saveOffer()" id="saveBtn"
+          class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition">
+          💾 حفظ
+        </button>
+        <button onclick="closeModal()"
+          class="px-6 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition">
+          إلغاء
+        </button>
+      </div>
+
+      <p id="saveErr" class="text-red-500 text-sm text-center hidden"></p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal تأكيد الحذف -->
+<div id="deleteModal" class="modal-backdrop hidden" onclick="if(event.target===this)document.getElementById('deleteModal').classList.add('hidden')">
+  <div class="bg-white rounded-2xl p-6 w-80 shadow-2xl text-center">
+    <div class="text-4xl mb-3">🗑️</div>
+    <h3 class="font-bold text-gray-800 mb-2">حذف العرض؟</h3>
+    <p class="text-gray-500 text-sm mb-5" id="deleteOfferName"></p>
+    <div class="flex gap-3">
+      <button onclick="confirmDelete()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition">حذف</button>
+      <button onclick="document.getElementById('deleteModal').classList.add('hidden')"
+        class="flex-1 border border-gray-300 py-3 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
+const ADMIN_PASS = 'aldawa2026';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let allOffers = [];
+let currentFilter = 'all';
+let editingId = null;
+let deleteId = null;
+let newFilesToUpload = [];
+let imagesToDelete = []; // { id, image_url }
+
+// ─── Login ───────────────────────────────────────────────
+function doLogin() {
+  const pass = document.getElementById('passInput').value;
+  if (pass === ADMIN_PASS) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    loadOffers();
+  } else {
+    document.getElementById('loginErr').classList.remove('hidden');
+    document.getElementById('passInput').value = '';
+    document.getElementById('passInput').focus();
+  }
+}
+function doLogout() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('passInput').value = '';
+}
+
+// ─── Load & Render ────────────────────────────────────────
+async function loadOffers() {
+  document.getElementById('loadingSpinner').classList.remove('hidden');
+  document.getElementById('offersList').classList.add('hidden');
+
+  const { data, error } = await sb.from('offers').select('*, offer_images(*)').order('sort_order').order('id');
+  if (error) { alert('خطأ في تحميل البيانات: ' + error.message); return; }
+
+  allOffers = data || [];
+  updateStats();
+  renderList();
+
+  document.getElementById('loadingSpinner').classList.add('hidden');
+  document.getElementById('offersList').classList.remove('hidden');
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allOffers.length;
+  document.getElementById('statInStock').textContent = allOffers.filter(o => o.in_stock).length;
+  document.getElementById('statNoImg').textContent = allOffers.filter(o => !o.image_url).length;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap bg-white text-gray-600 border';
+  });
+  document.getElementById('f' + f.charAt(0).toUpperCase() + f.slice(1)).className =
+    'filter-btn active px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap bg-green-600 text-white';
+  renderList();
+}
+
+function renderList() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let list = allOffers;
+
+  if (currentFilter === 'instock') list = list.filter(o => o.in_stock);
+  if (currentFilter === 'noimg') list = list.filter(o => !o.image_url);
+  if (q) list = list.filter(o => o.name.toLowerCase().includes(q) || (o.brand || '').toLowerCase().includes(q));
+
+  const container = document.getElementById('offersList');
+  document.getElementById('emptyMsg').classList.toggle('hidden', list.length > 0);
+
+  container.innerHTML = list.map(o => {
+    const imgs = (o.offer_images || []).sort((a,b) => a.sort_order - b.sort_order);
+    const thumbUrl = imgs.length > 0 ? imgs[0].image_url : null;
+    const discount = o.original_price && o.offer_price
+      ? Math.round((1 - o.offer_price / o.original_price) * 100) : null;
+
+    return `
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex gap-0">
+      <!-- صورة المنتج -->
+      <div class="w-20 sm:w-28 flex-shrink-0 bg-gray-100 relative">
+        ${thumbUrl
+          ? `<img src="${thumbUrl}" class="w-full h-full object-cover" style="min-height:80px;" />`
+          : `<div class="w-full flex items-center justify-center text-3xl text-gray-300" style="min-height:80px;">📦</div>`}
+        ${imgs.length > 1 ? `<span class="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">${imgs.length}</span>` : ''}
+      </div>
+
+      <!-- بيانات المنتج -->
+      <div class="flex-1 px-3 py-3 min-w-0">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-bold text-gray-800 text-sm leading-snug truncate">${o.name}</p>
+            ${o.brand ? `<p class="text-xs text-gray-400">${o.brand}</p>` : ''}
+          </div>
+          <div class="flex gap-1 flex-shrink-0">
+            <button onclick="openEditModal(${o.id})"
+              class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+              تعديل
+            </button>
+            <button onclick="askDelete(${o.id}, '${o.name.replace(/'/g,"\\'")}'')"
+              class="text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+              حذف
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 mt-2 flex-wrap">
+          ${o.badge ? `<span class="badge-pill bg-amber-100 text-amber-700">${o.badge}</span>` : ''}
+          ${discount ? `<span class="badge-pill bg-red-100 text-red-600">-${discount}%</span>` : ''}
+          <span class="badge-pill ${o.in_stock ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${o.in_stock ? '✓ متوفر' : '✗ نفد'}</span>
+          ${imgs.length > 0 ? `<span class="badge-pill bg-blue-100 text-blue-600">📸 ${imgs.length} صورة</span>` : `<span class="badge-pill bg-orange-100 text-orange-600">بدون صورة</span>`}
+        </div>
+
+        <div class="flex items-center gap-3 mt-2">
+          ${o.original_price ? `<span class="text-xs text-gray-400 line-through">${Number(o.original_price).toFixed(2)} ر.س</span>` : ''}
+          <span class="text-sm font-bold text-green-700">${Number(o.offer_price).toFixed(2)} ر.س</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Modal إضافة/تعديل ───────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  newFilesToUpload = [];
+  imagesToDelete = [];
+  document.getElementById('modalTitle').textContent = 'إضافة عرض جديد';
+  document.getElementById('fName').value = '';
+  document.getElementById('fBrand').value = '';
+  document.getElementById('fCategory').value = 'أخرى';
+  document.getElementById('fBadge').value = 'عرض خاص';
+  document.getElementById('fOrigPrice').value = '';
+  document.getElementById('fOfferPrice').value = '';
+  document.getElementById('fSortOrder').value = '0';
+  document.getElementById('fInStock').checked = true;
+  document.getElementById('existingImages').innerHTML = '';
+  document.getElementById('newImagesPreview').innerHTML = '';
+  document.getElementById('imgInput').value = '';
+  document.getElementById('saveErr').classList.add('hidden');
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+async function openEditModal(id) {
+  editingId = id;
+  newFilesToUpload = [];
+  imagesToDelete = [];
+  const offer = allOffers.find(o => o.id === id);
+  if (!offer) return;
+
+  document.getElementById('modalTitle').textContent = 'تعديل العرض';
+  document.getElementById('fName').value = offer.name;
+  document.getElementById('fBrand').value = offer.brand || '';
+  document.getElementById('fCategory').value = offer.category || 'أخرى';
+  document.getElementById('fBadge').value = offer.badge || '';
+  document.getElementById('fOrigPrice').value = offer.original_price || '';
+  document.getElementById('fOfferPrice').value = offer.offer_price || '';
+  document.getElementById('fSortOrder').value = offer.sort_order || 0;
+  document.getElementById('fInStock').checked = offer.in_stock !== false;
+  document.getElementById('newImagesPreview').innerHTML = '';
+  document.getElementById('imgInput').value = '';
+  document.getElementById('saveErr').classList.add('hidden');
+
+  // تحميل الصور الموجودة
+  const imgs = (offer.offer_images || []).sort((a, b) => a.sort_order - b.sort_order);
+  renderExistingImages(imgs);
+
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function renderExistingImages(imgs) {
+  const container = document.getElementById('existingImages');
+  if (imgs.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = imgs.map((img, i) => `
+    <div class="img-card w-20 h-20 rounded-xl overflow-hidden border-2 ${i===0?'border-green-400':'border-gray-200'}">
+      <img src="${img.image_url}" class="w-full h-full object-cover" />
+      ${i === 0 ? '<span class="primary-badge">رئيسية</span>' : ''}
+      <button class="del-btn" onclick="markImageDelete(${img.id}, '${img.image_url}', this)">×</button>
+    </div>
+  `).join('');
+}
+
+function markImageDelete(id, url, btn) {
+  imagesToDelete.push({ id, image_url: url });
+  btn.closest('.img-card').style.opacity = '0.3';
+  btn.textContent = '↩';
+  btn.onclick = () => unmarkImageDelete(id, url, btn);
+}
+
+function unmarkImageDelete(id, url, btn) {
+  imagesToDelete = imagesToDelete.filter(x => x.id !== id);
+  btn.closest('.img-card').style.opacity = '1';
+  btn.textContent = '×';
+  btn.onclick = () => markImageDelete(id, url, btn);
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.add('hidden');
+  newFilesToUpload = [];
+  imagesToDelete = [];
+}
+
+// ─── رفع الصور ─────────────────────────────────────────
+function handleImgSelect(e) {
+  addFilesToQueue([...e.target.files]);
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  addFilesToQueue([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
+}
+
+function addFilesToQueue(files) {
+  newFilesToUpload.push(...files);
+  renderNewPreviews();
+}
+
+function renderNewPreviews() {
+  const container = document.getElementById('newImagesPreview');
+  container.innerHTML = newFilesToUpload.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `
+      <div class="img-card w-20 h-20 rounded-xl overflow-hidden border-2 border-blue-300 relative">
+        <img src="${url}" class="w-full h-full object-cover" />
+        <span class="absolute bottom-1 right-1 text-xs bg-blue-500 text-white px-1 rounded">جديد</span>
+        <button class="del-btn" onclick="removeNewFile(${i})">×</button>
+      </div>`;
+  }).join('');
+}
+
+function removeNewFile(i) {
+  newFilesToUpload.splice(i, 1);
+  renderNewPreviews();
+}
+
+async function uploadImages(offerIdToUse) {
+  const results = [];
+  for (let i = 0; i < newFilesToUpload.length; i++) {
+    const file = newFilesToUpload[i];
+    const ext = file.name.split('.').pop();
+    const filename = `offer_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+    updateProgress(Math.round((i / newFilesToUpload.length) * 80), `رفع ${i + 1}/${newFilesToUpload.length}...`);
+
+    const { error } = await sb.storage.from('offers').upload(filename, file, { cacheControl: 'no-cache', upsert: true });
+    if (error) { console.error(error); continue; }
+
+    const { data: urlData } = sb.storage.from('offers').getPublicUrl(filename);
+    results.push(urlData.publicUrl);
+  }
+  return results;
+}
+
+function updateProgress(pct, text) {
+  document.getElementById('uploadProgress').classList.remove('hidden');
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = text;
+}
+function hideProgress() {
+  document.getElementById('uploadProgress').classList.add('hidden');
+  document.getElementById('progressBar').style.width = '0%';
+}
+
+// ─── حفظ العرض ──────────────────────────────────────────
+async function saveOffer() {
+  const name = document.getElementById('fName').value.trim();
+  const offerPrice = document.getElementById('fOfferPrice').value;
+
+  if (!name) { showErr('اسم المنتج مطلوب'); return; }
+  if (!offerPrice) { showErr('سعر العرض مطلوب'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الحفظ...';
+
+  try {
+    const payload = {
+      name,
+      brand: document.getElementById('fBrand').value.trim() || null,
+      category: document.getElementById('fCategory').value,
+      badge: document.getElementById('fBadge').value.trim() || null,
+      original_price: document.getElementById('fOrigPrice').value || null,
+      offer_price: offerPrice,
+      in_stock: document.getElementById('fInStock').checked,
+      sort_order: parseInt(document.getElementById('fSortOrder').value) || 0,
+    };
+
+    let offerId = editingId;
+
+    if (editingId) {
+      const { error } = await sb.from('offers').update(payload).eq('id', editingId);
+      if (error) throw error;
+    } else {
+      const { data, error } = await sb.from('offers').insert(payload).select().single();
+      if (error) throw error;
+      offerId = data.id;
+    }
+
+    // حذف الصور المطلوب حذفها
+    for (const img of imagesToDelete) {
+      await sb.from('offer_images').delete().eq('id', img.id);
+      const filename = img.image_url.split('/').pop();
+      await sb.storage.from('offers').remove([filename]);
+    }
+
+    // رفع الصور الجديدة
+    if (newFilesToUpload.length > 0) {
+      const uploadedUrls = await uploadImages(offerId);
+      updateProgress(90, 'حفظ الصور...');
+
+      // احسب أعلى sort_order موجود
+      const existing = (allOffers.find(o => o.id === offerId)?.offer_images || []);
+      const remaining = existing.filter(img => !imagesToDelete.find(d => d.id === img.id));
+      let maxOrder = remaining.length > 0 ? Math.max(...remaining.map(x => x.sort_order)) : -1;
+
+      for (const url of uploadedUrls) {
+        maxOrder++;
+        await sb.from('offer_images').insert({ offer_id: offerId, image_url: url, sort_order: maxOrder });
+      }
+    }
+
+    // تحديث image_url الرئيسية في offers
+    const { data: imgs } = await sb.from('offer_images').select('*').eq('offer_id', offerId).order('sort_order');
+    const primaryUrl = imgs && imgs.length > 0 ? imgs[0].image_url : null;
+    await sb.from('offers').update({ image_url: primaryUrl }).eq('id', offerId);
+
+    updateProgress(100, 'تم!');
+    setTimeout(hideProgress, 500);
+
+    closeModal();
+    await loadOffers();
+
+  } catch (err) {
+    showErr('حدث خطأ: ' + err.message);
+    hideProgress();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 حفظ';
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('saveErr');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// ─── حذف العرض ──────────────────────────────────────────
+function askDelete(id, name) {
+  deleteId = id;
+  document.getElementById('deleteOfferName').textContent = name;
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+async function confirmDelete() {
+  if (!deleteId) return;
+  document.getElementById('deleteModal').classList.add('hidden');
+
+  const offer = allOffers.find(o => o.id === deleteId);
+  if (offer && offer.offer_images) {
+    for (const img of offer.offer_images) {
+      const filename = img.image_url.split('/').pop();
+      await sb.storage.from('offers').remove([filename]);
+    }
+  }
+
+  await sb.from('offers').delete().eq('id', deleteId);
+  deleteId = null;
+  await loadOffers();
+}
+</script>
+</body>
+</html>
