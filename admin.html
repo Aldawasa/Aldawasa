@@ -354,7 +354,7 @@ function renderList() {
               class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
               تعديل
             </button>
-            <button onclick="askDelete(${o.id}, '${o.name.replace(/'/g,"\\'")}'')"
+            <button onclick="askDelete(${o.id}, '${o.name.replace(/'/g,"\\'")}')" 
               class="text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
               حذف
             </button>
