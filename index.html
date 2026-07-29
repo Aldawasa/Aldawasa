@@ -44,7 +44,7 @@
     gtag('js', new Date());
     gtag('config', 'G-2DZS48L6W3');
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/tailwind.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* حالة "الساعات الأخيرة" للعرض */
@@ -857,11 +857,16 @@ function initPromo() {
   const dBox  = document.getElementById('cdDBox');
   const ends  = document.getElementById('promoEndsText');
 
-  // نص تاريخ النهاية الفعلي (يزيد ثقة العميل بأن الموعد حقيقي)
+  // نص تاريخ النهاية الفعلي بالتقويم الميلادي (يزيد ثقة العميل بأن الموعد حقيقي)
   try {
-    ends.textContent = 'ينتهي العرض في ' + new Date(PROMO.endsAt).toLocaleString('ar-SA', {
-      timeZone: 'Asia/Riyadh', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit'
-    });
+    const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Riyadh', year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
+    }).formatToParts(new Date(PROMO.endsAt));
+    const get = t => (parts.find(p => p.type === t) || {}).value;
+    const period = get('dayPeriod') === 'PM' ? 'م' : 'ص';
+    ends.textContent = `ينتهي العرض ${get('day')} ${AR_MONTHS[Number(get('month')) - 1]} ${get('year')} — ${get('hour')}:${get('minute')} ${period}`;
   } catch (e) {}
 
   const tick = () => {
