@@ -1,8 +1,8 @@
 // Service Worker — بسيط وآمن
 // يتجاوز طلبات Supabase و CDN تمامًا (تبقى البيانات والصور محدّثة دائمًا)،
 // ويخزّن هيكل الموقع فقط لتفعيل التثبيت والعمل جزئيًا بدون اتصال.
-const CACHE = 'aldawa-v2';
-const SHELL = ['/', '/index.html', '/tailwind.css', '/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.svg'];
+const CACHE = 'aldawa-v3';
+const SHELL = ['/', '/index.html', '/tailwind.css', '/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.png', '/logo-badge.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
