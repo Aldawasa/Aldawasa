@@ -186,7 +186,7 @@
 <!-- FILTERS -->
 <div class="max-w-5xl mx-auto px-4 pt-4">
   <div id="catFilters" class="flex gap-2 overflow-x-auto cat-scroll pb-1">
-    <button onclick="setFilter('all')" id="f-all" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-600 text-white flex-shrink-0">🏷️ الكل</button>
+    <button onclick="setFilter('all')" id="f-all" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-green-800 text-white flex-shrink-0">🏷️ الكل</button>
     <button onclick="setFilter('featured')" id="f-featured" class="cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold bg-white text-amber-600 border border-amber-300 flex-shrink-0">⭐ المميزة</button>
   </div>
 </div>
@@ -443,7 +443,7 @@
 
 <!-- ===== FLOATING WHATSAPP BUTTON ===== -->
 <a href="https://wa.me/966539835556" target="_blank"
-  class="fixed bottom-6 left-6 z-40 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-xl flex items-center justify-center transition"
+  class="fixed bottom-6 left-6 z-40 bg-green-800 hover:bg-green-900 text-white rounded-full shadow-xl flex items-center justify-center transition"
   style="width:56px;height:56px;font-size:26px" title="تواصل معنا">
   💬
 </a>
@@ -548,7 +548,7 @@ function setFilter(f) {
     b.className = `cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold flex-shrink-0 ${isFeat ? 'bg-white text-amber-600 border border-amber-300' : 'bg-white text-gray-600 border'}`;
   });
   const a = document.getElementById('f-' + f);
-  if(a) a.className = `cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold flex-shrink-0 ${f==='featured' ? 'bg-amber-400 text-amber-900' : 'bg-green-600 text-white'}`;
+  if(a) a.className = `cat-btn whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold flex-shrink-0 ${f==='featured' ? 'bg-amber-400 text-amber-900' : 'bg-green-800 text-white'}`;
   renderCards();
 }
 
