@@ -4,6 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>عروض صيدلية الدواء النفيس</title>
+  <meta name="description" content="أحدث عروض وتخفيضات صيدلية الدواء النفيس — أدوية ومستلزمات طبية وعناية وتجميل بأفضل الأسعار. اطلب مباشرة عبر واتساب." />
+  <link rel="canonical" href="https://aldawa.sa/" />
+  <meta name="theme-color" content="#059669" />
+
+  <!-- معاينة الرابط في واتساب / السوشيال (Open Graph) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="صيدلية الدواء النفيس" />
+  <meta property="og:title" content="عروض صيدلية الدواء النفيس" />
+  <meta property="og:description" content="أحدث العروض والتخفيضات — أدوية ومستلزمات طبية وعناية وتجميل. اطلب عبر واتساب مباشرة." />
+  <meta property="og:image" content="https://aldawa.sa/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://aldawa.sa/" />
+  <meta property="og:locale" content="ar_AR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="عروض صيدلية الدواء النفيس" />
+  <meta name="twitter:description" content="أحدث العروض والتخفيضات من صيدلية الدواء النفيس." />
+  <meta name="twitter:image" content="https://aldawa.sa/og-image.png" />
+
+  <!-- الأيقونات + PWA (إضافة إلى الشاشة الرئيسية) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="عروض الدواء النفيس" />
+
+  <!-- تسريع التحميل -->
+  <link rel="preconnect" href="https://whtleoyhoidapvvandtr.supabase.co" crossorigin />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2DZS48L6W3"></script>
   <script>
@@ -431,7 +463,7 @@ function renderCards() {
     const added = inCartIds.has(o.id);
     return `<div class="offer-card bg-white rounded-2xl overflow-hidden shadow-sm fade-up" style="animation-delay:${i*20}ms">
       <div class="relative bg-gray-100 cursor-pointer" style="height:160px" onclick="openProduct(${o.id})">
-        ${thumb ? `<img src="${thumb}" class="w-full h-full object-cover" loading="lazy"/>` : `<div class="w-full h-full flex items-center justify-center text-5xl">💊</div>`}
+        ${thumb ? `<img src="${thumb}" class="w-full h-full object-cover" loading="lazy" decoding="async" alt="${(o.title||'عرض').replace(/"/g,'')}"/>` : `<div class="w-full h-full flex items-center justify-center text-5xl">💊</div>`}
         ${disc ? `<span class="absolute top-2 right-2 badge-pill bg-red-500 text-white">-${disc}%</span>` : ''}
         ${o.featured ? `<span class="absolute top-2 left-2 badge-pill bg-amber-400 text-amber-900">⭐</span>` : ''}
       </div>
@@ -469,7 +501,7 @@ function openProduct(id) {
   if (imgs.length > 0) {
     slider.innerHTML = imgs.map(img =>
       `<div style="min-width:100%;height:100%;scroll-snap-align:start;flex-shrink:0;background:#f9fafb;display:flex;align-items:center;justify-content:center">
-        <img src="${img.image_url}" style="max-width:100%;max-height:100%;object-fit:contain"/>
+        <img src="${img.image_url}" loading="lazy" decoding="async" alt="صورة العرض" style="max-width:100%;max-height:100%;object-fit:contain"/>
       </div>`
     ).join('');
     dots.innerHTML = imgs.map((_, i) =>
@@ -702,6 +734,12 @@ function registerLoyalty() {
 }
 
 init();
+</script>
+<script>
+  // تسجيل Service Worker لتفعيل "إضافة إلى الشاشة الرئيسية" والعمل بلا اتصال جزئيًا
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  }
 </script>
 </body>
 </html>

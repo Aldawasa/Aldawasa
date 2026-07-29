@@ -40,14 +40,17 @@
     <div class="text-4xl mb-4">💊</div>
     <h1 class="text-xl font-bold text-gray-800 mb-1">صيدلية الدواء النفيس</h1>
     <p class="text-gray-500 text-sm mb-6">لوحة الإدارة</p>
-    <input id="passInput" type="password" placeholder="كلمة المرور"
+    <input id="emailInput" type="email" placeholder="البريد الإلكتروني" autocomplete="username"
+      class="w-full border border-gray-300 rounded-xl px-4 py-3 text-center text-base focus:outline-none focus:border-green-500 mb-3"
+      onkeydown="if(event.key==='Enter')document.getElementById('passInput').focus()" />
+    <input id="passInput" type="password" placeholder="كلمة المرور" autocomplete="current-password"
       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-center text-lg focus:outline-none focus:border-green-500 mb-4"
       onkeydown="if(event.key==='Enter')doLogin()" />
-    <button onclick="doLogin()"
+    <button onclick="doLogin()" id="loginBtn"
       class="w-full bg-green-600 text-white rounded-xl py-3 font-bold hover:bg-green-700 transition">
       دخول
     </button>
-    <p id="loginErr" class="text-red-500 text-sm mt-3 hidden">كلمة المرور غلط</p>
+    <p id="loginErr" class="text-red-500 text-sm mt-3 hidden">بيانات الدخول غير صحيحة</p>
   </div>
 </div>
 
@@ -253,8 +256,7 @@
 <script>
 const SUPABASE_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
-const ADMIN_PASS = 'admin';
-
+// SUPABASE_KEY هو المفتاح العام (anon) — آمن ظهوره. الكتابة محميّة بسياسات RLS + تسجيل الدخول.
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allOffers = [];
@@ -265,23 +267,41 @@ let newFilesToUpload = [];
 let imagesToDelete = []; // { id, image_url }
 
 // ─── Login ───────────────────────────────────────────────
-function doLogin() {
-  const pass = document.getElementById('passInput').value;
-  if (pass === ADMIN_PASS) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    loadOffers();
-  } else {
-    document.getElementById('loginErr').style.display = 'block';
+async function doLogin() {
+  const email = document.getElementById('emailInput').value.trim();
+  const pass  = document.getElementById('passInput').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  err.classList.add('hidden');
+  if (!email || !pass) { err.textContent = 'أدخل البريد وكلمة المرور'; err.classList.remove('hidden'); return; }
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'جاري الدخول…';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = label;
+  if (error) {
+    err.textContent = 'بيانات الدخول غير صحيحة';
+    err.classList.remove('hidden');
     document.getElementById('passInput').value = '';
-    document.getElementById('passInput').focus();
+    return;
   }
+  showApp();
 }
-function doLogout() {
-  document.getElementById('loginScreen').style.display = 'flex';
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  loadOffers();
+}
+async function doLogout() {
+  await sb.auth.signOut();
   document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('passInput').value = '';
+  document.getElementById('emailInput').value = '';
 }
+// استعادة الجلسة تلقائيًا عند فتح الصفحة (يبقى المستخدم مسجّلاً دخوله)
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) showApp();
+})();
 
 // ─── Load & Render ────────────────────────────────────────
 async function loadOffers() {
