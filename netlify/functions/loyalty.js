@@ -8,10 +8,20 @@ exports.handler = async (event) => {
   const { phone } = JSON.parse(event.body || '{}');
   if (!phone) return { statusCode: 400, body: JSON.stringify({ error: 'phone required' }) };
 
-  const ODOO_URL = 'health-path.erp-ksa.aumet.com';
-  const DB = 'health-path.erp-ksa.aumet.com';
-  const USER = 'sami@aumet.com';
-  const PASS = 'Sami@1212';
+  // 🔒 بيانات الدخول تُقرأ من متغيرات البيئة في Netlify (Site settings → Environment variables)
+  // ولا تُكتب أبدًا في الكود، لأن هذا المستودع عام ويقدر أي شخص يقرأه.
+  const ODOO_URL = process.env.ODOO_HOST || 'health-path.erp-ksa.aumet.com';
+  const DB       = process.env.ODOO_DB   || 'health-path.erp-ksa.aumet.com';
+  const USER     = process.env.ODOO_USER;
+  const PASS     = process.env.ODOO_PASS;
+
+  if (!USER || !PASS) {
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'server not configured: missing ODOO_USER / ODOO_PASS' })
+    };
+  }
 
   function xmlCall(path, body) {
     return new Promise((resolve, reject) => {

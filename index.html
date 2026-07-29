@@ -47,6 +47,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* حالة "الساعات الأخيرة" للعرض */
+    @keyframes promoPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+    .promo-urgent { animation: promoPulse 1.6s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) { .promo-urgent { animation: none; } }
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
     * { font-family: 'Tajawal', sans-serif; }
     #cartPanel { transition: transform 0.3s ease; }
@@ -113,9 +117,9 @@
 
       <!-- العدّاد التنازلي -->
       <div id="promoCountdownWrap" class="mt-3">
-        <p class="text-[11px] text-emerald-50 mb-1.5 font-bold">⏳ ينتهي العرض بعد:</p>
+        <p id="promoLabel" class="text-[11px] text-emerald-50 mb-1.5 font-bold">⏳ ينتهي العرض بعد:</p>
         <div class="flex gap-2" dir="ltr">
-          <div class="flex-1 bg-white/15 backdrop-blur rounded-xl py-2 text-center">
+          <div id="cdDBox" class="flex-1 bg-white/15 backdrop-blur rounded-xl py-2 text-center">
             <div id="cdD" class="text-xl sm:text-2xl font-extrabold tabular-nums">00</div>
             <div class="text-[10px] text-emerald-50">يوم</div>
           </div>
@@ -132,6 +136,7 @@
             <div class="text-[10px] font-bold">ثانية</div>
           </div>
         </div>
+        <p id="promoEndsText" class="text-[10px] text-emerald-50/90 mt-1.5"></p>
       </div>
 
       <!-- شرائح الخصم -->
@@ -495,7 +500,13 @@ const WA = '966539835556';
    عند انتهاء الوقت يختفي البانر تلقائيًا بدون أي تعديل منك. */
 const PROMO = {
   active: true,
-  endsAt: '2026-08-15T23:59:59+03:00'
+  endsAt: '2026-07-31T23:59:59+03:00',   // نهاية العرض الفعلية (بتوقيت السعودية)
+
+  /* urgencyMode:
+     'real'    = يعرض الوقت الحقيقي المتبقي، ويصير أكثر إلحاحًا كل ما قرب الموعد (موصى به)
+     'rolling' = يعرض نافذة متجددة كل rollingHours ساعة وتتكرر (لا يتجاوز أبدًا النهاية الفعلية) */
+  urgencyMode: 'real',
+  rollingHours: 12
 };
 // ⚠️ تم حذف بيانات دخول نظام الـ ERP من هذه الصفحة العامة (كانت مكشوفة لأي زائر).
 // لا تضع أي كلمة سر أو مفتاح سري في ملفات الموقع — أي شيء هنا يراه الجميع.
@@ -841,9 +852,29 @@ function initPromo() {
   try { dismissed = sessionStorage.getItem('promo_dismissed') === '1'; } catch (e) {}
 
   const pad = n => String(n).padStart(2, '0');
+  const card  = box.firstElementChild;
+  const label = document.getElementById('promoLabel');
+  const dBox  = document.getElementById('cdDBox');
+  const ends  = document.getElementById('promoEndsText');
+
+  // نص تاريخ النهاية الفعلي (يزيد ثقة العميل بأن الموعد حقيقي)
+  try {
+    ends.textContent = 'ينتهي العرض في ' + new Date(PROMO.endsAt).toLocaleString('ar-SA', {
+      timeZone: 'Asia/Riyadh', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit'
+    });
+  } catch (e) {}
+
   const tick = () => {
-    const diff = end - Date.now();
-    if (diff <= 0) { box.classList.add('hidden'); clearInterval(timer); return; }  // انتهى العرض → يختفي تلقائيًا
+    const real = end - Date.now();
+    if (real <= 0) { box.classList.add('hidden'); clearInterval(timer); return; }  // انتهى العرض → يختفي تلقائيًا
+
+    // الوقت المعروض: إما الحقيقي، أو نافذة متجددة لا تتجاوز الوقت الحقيقي أبدًا
+    let diff = real;
+    if (PROMO.urgencyMode === 'rolling') {
+      const win = Math.max(1, PROMO.rollingHours) * 3600000;
+      if (real > win) diff = real % win || win;
+    }
+
     const d = Math.floor(diff / 86400000);
     const h = Math.floor(diff % 86400000 / 3600000);
     const m = Math.floor(diff % 3600000 / 60000);
@@ -852,6 +883,16 @@ function initPromo() {
     document.getElementById('cdH').textContent = pad(h);
     document.getElementById('cdM').textContent = pad(m);
     document.getElementById('cdS').textContent = pad(s);
+
+    // تصعيد الإلحاح: يخفي خانة الأيام ويشتد اللون كل ما قرب الموعد
+    if (dBox) dBox.classList.toggle('hidden', d === 0);
+    if (real <= 12 * 3600000) {
+      if (label) label.textContent = '🔥 ساعات أخيرة — ينتهي العرض بعد:';
+      card.classList.add('promo-urgent', 'ring-4', 'ring-amber-300');
+    } else if (real <= 48 * 3600000) {
+      if (label) label.textContent = '⚡ آخر فرصة — ينتهي العرض بعد:';
+      card.classList.add('ring-4', 'ring-amber-300');
+    }
   };
   tick();
   if (end - Date.now() <= 0) return;

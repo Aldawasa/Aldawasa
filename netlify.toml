@@ -1,2 +1,29 @@
 [build]
   functions = "netlify/functions"
+
+# رؤوس الأمان لكل الصفحات
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# لوحة الأدمن: لا تُفهرس في محركات البحث
+[[headers]]
+  for = "/admin.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# Service Worker يجب ألا يُخزَّن طويلًا حتى تصل التحديثات فورًا
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# الأيقونات والصور الثابتة: تخزين طويل (تحميل أسرع للزوار المتكررين)
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
