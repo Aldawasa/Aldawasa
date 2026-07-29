@@ -93,6 +93,89 @@
   🔥 عروض محدودة — اطلب الآن قبل نفاد الكمية! | 📞 0539835556
 </div>
 
+<!-- ===== بانر عرض هدية التوفير + العدّاد التنازلي ===== -->
+<div id="promoBanner" class="hidden max-w-5xl mx-auto px-4 pt-4">
+  <div class="relative overflow-hidden rounded-3xl shadow-xl bg-gradient-to-bl from-emerald-700 via-green-600 to-emerald-500 text-white">
+    <div class="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white opacity-10"></div>
+    <div class="absolute -bottom-12 -right-6 w-44 h-44 rounded-full bg-amber-300 opacity-10"></div>
+
+    <div class="relative p-4 sm:p-5">
+      <!-- العنوان -->
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <span class="inline-block bg-amber-400 text-amber-900 text-[11px] font-extrabold px-2.5 py-1 rounded-full mb-2">🎁 عرض لفترة محدودة</span>
+          <h2 class="text-lg sm:text-2xl font-extrabold leading-tight">رجعنا لكم عرض هدية التوفير!</h2>
+          <p class="text-emerald-50 text-xs sm:text-sm mt-1">اشترِ الآن وخذ قسيمة خصم لفاتورتك الجاية 🎉</p>
+        </div>
+        <button onclick="dismissPromo()" aria-label="إغلاق"
+          class="text-white/70 hover:text-white text-xl leading-none px-2 shrink-0">✕</button>
+      </div>
+
+      <!-- العدّاد التنازلي -->
+      <div id="promoCountdownWrap" class="mt-3">
+        <p class="text-[11px] text-emerald-50 mb-1.5 font-bold">⏳ ينتهي العرض بعد:</p>
+        <div class="flex gap-2" dir="ltr">
+          <div class="flex-1 bg-white/15 backdrop-blur rounded-xl py-2 text-center">
+            <div id="cdD" class="text-xl sm:text-2xl font-extrabold tabular-nums">00</div>
+            <div class="text-[10px] text-emerald-50">يوم</div>
+          </div>
+          <div class="flex-1 bg-white/15 backdrop-blur rounded-xl py-2 text-center">
+            <div id="cdH" class="text-xl sm:text-2xl font-extrabold tabular-nums">00</div>
+            <div class="text-[10px] text-emerald-50">ساعة</div>
+          </div>
+          <div class="flex-1 bg-white/15 backdrop-blur rounded-xl py-2 text-center">
+            <div id="cdM" class="text-xl sm:text-2xl font-extrabold tabular-nums">00</div>
+            <div class="text-[10px] text-emerald-50">دقيقة</div>
+          </div>
+          <div class="flex-1 bg-amber-400 text-amber-900 rounded-xl py-2 text-center">
+            <div id="cdS" class="text-xl sm:text-2xl font-extrabold tabular-nums">00</div>
+            <div class="text-[10px] font-bold">ثانية</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- شرائح الخصم -->
+      <div class="grid grid-cols-2 gap-2 mt-3">
+        <div class="bg-white rounded-xl p-2.5 text-center shadow-sm">
+          <div class="text-[11px] text-gray-500">اشترِ بـ</div>
+          <div class="text-base font-extrabold text-gray-800">150 ريال</div>
+          <div class="text-emerald-600 font-extrabold text-sm mt-0.5">🎁 خذ 10</div>
+        </div>
+        <div class="bg-white rounded-xl p-2.5 text-center shadow-sm">
+          <div class="text-[11px] text-gray-500">اشترِ بـ</div>
+          <div class="text-base font-extrabold text-gray-800">200 ريال</div>
+          <div class="text-emerald-600 font-extrabold text-sm mt-0.5">🎁 خذ 15</div>
+        </div>
+        <div class="bg-white rounded-xl p-2.5 text-center shadow-sm">
+          <div class="text-[11px] text-gray-500">اشترِ بـ</div>
+          <div class="text-base font-extrabold text-gray-800">250 ريال</div>
+          <div class="text-emerald-600 font-extrabold text-sm mt-0.5">🎁 خذ 20</div>
+        </div>
+        <div class="bg-white rounded-xl p-2.5 text-center shadow-sm ring-2 ring-amber-400 relative">
+          <span class="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[9px] font-extrabold px-2 py-0.5 rounded-full">الأفضل</span>
+          <div class="text-[11px] text-gray-500">اشترِ بـ</div>
+          <div class="text-base font-extrabold text-gray-800">300 ريال</div>
+          <div class="text-emerald-600 font-extrabold text-sm mt-0.5">🎁 خذ 25</div>
+        </div>
+      </div>
+
+      <!-- التوصيل + زر الطلب -->
+      <div class="flex items-center gap-2 mt-3">
+        <div class="flex-1 bg-white/15 rounded-xl px-3 py-2 text-center text-xs font-bold">🚚 توصيل مجاني للطلبات 30 ريال+</div>
+        <a href="https://wa.me/966539835556?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A7%D8%A8%D9%88%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%81%D8%A7%D8%AF%D8%A9%20%D9%85%D9%86%20%D8%B9%D8%B1%D8%B6%20%D9%87%D8%AF%D9%8A%D8%A9%20%D8%A7%D9%84%D8%AA%D9%88%D9%81%D9%8A%D8%B1"
+           target="_blank" rel="noopener"
+           onclick="try{gtag('event','promo_whatsapp_click',{promo:'savings_gift'})}catch(e){}"
+           class="bg-amber-400 hover:bg-amber-300 text-amber-900 font-extrabold text-sm px-4 py-2.5 rounded-xl shadow transition shrink-0">💬 اطلب الآن</a>
+      </div>
+
+      <!-- الشروط -->
+      <p class="text-[10px] text-emerald-50/90 mt-2.5 leading-relaxed">
+        * العرض لا يشمل الحليب والحفاضات، ويُستخدم الخصم بعد 24 ساعة من إصدار الفاتورة.
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- FILTERS -->
 <div class="max-w-5xl mx-auto px-4 pt-4">
   <div id="catFilters" class="flex gap-2 overflow-x-auto cat-scroll pb-1">
@@ -404,7 +487,18 @@
 const SB_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
 const WA = '966539835556';
-const ODOO = { url:'https://health-path.erp-ksa.aumet.com', db:'health-path.erp-ksa.aumet.com', user:'sami@aumet.com', pass:'Sami@1212' };
+
+/* ===== إعدادات عرض هدية التوفير =====
+   لتعديل العرض لاحقًا غيّر هذي القيم فقط:
+   active  : true لتشغيل البانر، false لإخفائه تمامًا
+   endsAt  : تاريخ ووقت انتهاء العرض (بتوقيت السعودية +03:00)
+   عند انتهاء الوقت يختفي البانر تلقائيًا بدون أي تعديل منك. */
+const PROMO = {
+  active: true,
+  endsAt: '2026-08-15T23:59:59+03:00'
+};
+// ⚠️ تم حذف بيانات دخول نظام الـ ERP من هذه الصفحة العامة (كانت مكشوفة لأي زائر).
+// لا تضع أي كلمة سر أو مفتاح سري في ملفات الموقع — أي شيء هنا يراه الجميع.
 
 const sb = supabase.createClient(SB_URL, SB_KEY);
 let allOffers = [], activeFilter = 'all', loyalPhone = '';
@@ -733,7 +827,40 @@ function registerLoyalty() {
   closeLoyalty();
 }
 
+/* ===== بانر العرض + العدّاد التنازلي ===== */
+function dismissPromo() {
+  document.getElementById('promoBanner').classList.add('hidden');
+  try { sessionStorage.setItem('promo_dismissed', '1'); } catch (e) {}
+}
+function initPromo() {
+  const box = document.getElementById('promoBanner');
+  if (!box || !PROMO.active) return;
+  const end = new Date(PROMO.endsAt).getTime();
+  if (isNaN(end)) return;
+  let dismissed = false;
+  try { dismissed = sessionStorage.getItem('promo_dismissed') === '1'; } catch (e) {}
+
+  const pad = n => String(n).padStart(2, '0');
+  const tick = () => {
+    const diff = end - Date.now();
+    if (diff <= 0) { box.classList.add('hidden'); clearInterval(timer); return; }  // انتهى العرض → يختفي تلقائيًا
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor(diff % 86400000 / 3600000);
+    const m = Math.floor(diff % 3600000 / 60000);
+    const s = Math.floor(diff % 60000 / 1000);
+    document.getElementById('cdD').textContent = pad(d);
+    document.getElementById('cdH').textContent = pad(h);
+    document.getElementById('cdM').textContent = pad(m);
+    document.getElementById('cdS').textContent = pad(s);
+  };
+  tick();
+  if (end - Date.now() <= 0) return;
+  if (!dismissed) box.classList.remove('hidden');
+  const timer = setInterval(tick, 1000);
+}
+
 init();
+initPromo();
 </script>
 <script>
   // تسجيل Service Worker لتفعيل "إضافة إلى الشاشة الرئيسية" والعمل بلا اتصال جزئيًا

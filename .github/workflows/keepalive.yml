@@ -1,0 +1,26 @@
+name: Supabase Keep-Alive
+
+# يمنع Supabase من إيقاف المشروع تلقائيًا بسبب عدم النشاط (الخطة المجانية توقف بعد ٧ أيام سكون).
+# يرسل طلب قراءة بسيط كل يومين. يستخدم المفتاح العام (anon) وهو ظاهر أصلًا في صفحة الموقع.
+
+on:
+  schedule:
+    - cron: '0 6 */2 * *'   # كل يومين الساعة 6:00 UTC (9 صباحًا بتوقيت السعودية)
+  workflow_dispatch:         # يمكن تشغيله يدويًا من تبويب Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          URL="https://whtleoyhoidapvvandtr.supabase.co/rest/v1/offers?select=id&limit=1"
+          KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY"
+          CODE=$(curl -s -o /tmp/out.txt -w "%{http_code}" "$URL" -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          echo "HTTP $CODE"
+          cat /tmp/out.txt
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Supabase ping failed with HTTP $CODE — قد يكون المشروع متوقفًا"
+            exit 1
+          fi
+          echo "✅ Supabase is awake"
