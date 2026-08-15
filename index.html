@@ -201,6 +201,14 @@
   <div id="loadingBox" class="py-16 text-center"><div class="spinner"></div><p class="text-gray-400 mt-4 text-sm">جاري تحميل العروض...</p></div>
   <div id="grid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
   <p id="emptyMsg" class="hidden text-center text-gray-400 py-16">لا توجد نتائج 😔</p>
+  <div id="errorBox" class="hidden text-center py-14 px-6">
+    <div class="text-5xl mb-3">🔄</div>
+    <p class="text-gray-700 font-bold text-lg mb-1">يتم تحديث العروض حالياً</p>
+    <p class="text-gray-500 text-sm mb-5">اطلب مباشرة عبر واتساب وبنخدمك فوراً 💚</p>
+    <a href="https://wa.me/966539835556?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%A8%D8%BA%D9%89%20%D8%A7%D8%B3%D8%AA%D9%81%D8%B3%D8%B1%20%D8%B9%D9%86%20%D8%A7%D9%84%D8%B9%D8%B1%D9%88%D8%B6"
+       class="inline-block bg-green-800 hover:bg-green-900 text-white font-bold px-6 py-3 rounded-2xl transition">💬 اطلب عبر واتساب</a>
+    <a href="tel:0539835556" class="block mt-4 text-green-800 font-bold">📞 0539835556</a>
+  </div>
 </main>
 
 <!-- CART OVERLAY -->
@@ -519,7 +527,18 @@ let cart = (() => { try { return JSON.parse(localStorage.getItem('aldawa_cart')|
 
 // ── INIT ──
 async function init() {
-  const { data } = await sb.from('offers').select('*, offer_images(*)').eq('in_stock', true).order('sort_order').order('id');
+  let data;
+  try {
+    const res = await sb.from('offers').select('*, offer_images(*)').eq('in_stock', true).order('sort_order').order('id');
+    if (res.error) throw res.error;
+    data = res.data;
+  } catch (e) {
+    // تعذّر الاتصال بقاعدة البيانات — نعرض بديلاً مفيداً بدل دوران لا ينتهي
+    document.getElementById('loadingBox').classList.add('hidden');
+    document.getElementById('errorBox').classList.remove('hidden');
+    try { updateBadge(); } catch(_) {}
+    return;
+  }
   allOffers = data || [];
   buildCatFilter();
   renderCards();
