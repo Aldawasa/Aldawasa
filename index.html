@@ -100,6 +100,31 @@
 </div>
 
 <!-- ===== بانر عرض هدية التوفير + العدّاد التنازلي ===== -->
+<!-- ===== بانر اليوم الوطني ٩٦ — يختفي تلقائيًا بنهاية ٣٠ سبتمبر ٢٠٢٦ ===== -->
+<div id="ndBanner" class="max-w-5xl mx-auto px-4 pt-4">
+  <div class="relative rounded-3xl overflow-hidden shadow-xl">
+    <a href="https://wa.me/966539835556?text=%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%20%D8%B9%D9%84%D9%8A%D9%83%D9%85%D8%8C%20%D8%A3%D8%A8%D8%BA%D9%89%20%D8%A3%D8%B3%D8%AA%D9%81%D9%8A%D8%AF%20%D9%85%D9%86%20%D8%B9%D8%B1%D8%B6%20%D8%A7%D9%84%D9%8A%D9%88%D9%85%20%D8%A7%D9%84%D9%88%D8%B7%D9%86%D9%8A%3A%20%D8%A7%D9%84%D8%AD%D8%A8%D8%A9%20%D8%A7%D9%84%D8%AB%D8%A7%D9%86%D9%8A%D8%A9%20%D8%A8%D9%80%20%D9%A9%D9%A6%20%D9%87%D9%84%D9%84%D8%A9" target="_blank" rel="noopener" class="block"
+       onclick="try{gtag('event','national_day_click',{promo:'nd96'})}catch(e){}">
+      <picture>
+        <source media="(min-width: 768px)" type="image/webp" srcset="/nd96-wide.webp" width="1200" height="628" />
+        <source media="(min-width: 768px)" srcset="/nd96-wide.jpg" width="1200" height="628" />
+        <source type="image/webp" srcset="/nd96-square.webp" />
+        <img src="/nd96-square.jpg" width="1080" height="1080" alt="عزّنا بكرمنا — اليوم الوطني ٩٦. صيدلية الدواء النفيس مفتوحة ٢٤ ساعة. عرض الحبة الثانية بـ ٩٦ هللة عند شراء العبوة الأولى بسعرها الأصلي، على أغلب أصناف الصيدلية ما عدا الأدوية والحليب والحفاضات. توصيل مجاني فوق ٣٠ ريال ونقاط ولاء على كل عملية شراء." class="block w-full h-auto" fetchpriority="high" />
+      </picture>
+    </a>
+    <button type="button" aria-label="إغلاق"
+      onclick="document.getElementById('ndBanner').remove();try{sessionStorage.setItem('ndClosed','1')}catch(e){}"
+      class="absolute top-3 left-3 w-8 h-8 rounded-full bg-white/80 text-gray-700 text-lg leading-none flex items-center justify-center shadow">✕</button>
+  </div>
+</div>
+<script>
+  (function () {
+    var end = new Date('2026-09-30T23:59:59+03:00').getTime();
+    var closed = false; try { closed = sessionStorage.getItem('ndClosed') === '1'; } catch (e) {}
+    if (Date.now() > end || closed) { var el = document.getElementById('ndBanner'); if (el) el.remove(); }
+  })();
+</script>
+
 <div id="promoBanner" class="hidden max-w-5xl mx-auto px-4 pt-4">
   <div class="relative overflow-hidden rounded-3xl shadow-xl bg-gradient-to-bl from-emerald-900 via-green-800 to-emerald-700 text-white">
     <div class="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white opacity-10"></div>
