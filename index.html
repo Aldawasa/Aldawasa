@@ -33,7 +33,7 @@
   <meta name="apple-mobile-web-app-title" content="عروض الدواء النفيس" />
 
   <!-- تسريع التحميل -->
-  <link rel="preconnect" href="https://whtleoyhoidapvvandtr.supabase.co" crossorigin />
+  <link rel="preconnect" href="https://qkwadlsmvlnpcoeccqsf.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -499,8 +499,8 @@
 </footer>
 
 <script>
-const SB_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
+const SB_URL = 'https://qkwadlsmvlnpcoeccqsf.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrd2FkbHNtdmxucGNvZWNjcXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MjQ3MTUsImV4cCI6MjA4MzMwMDcxNX0.cNMBjD_wTusoc9OxcRP7ql1U35-SRdgsfq9sqKoKEd8';
 const WA = '966539835556';
 
 /* ===== إعدادات عرض هدية التوفير =====
@@ -540,6 +540,13 @@ async function init() {
     return;
   }
   allOffers = data || [];
+  if (!allOffers.length) {
+    // لا توجد عروض منشورة بعد → نعرض زر واتساب بدل "لا توجد نتائج"
+    document.getElementById('loadingBox').classList.add('hidden');
+    document.getElementById('errorBox').classList.remove('hidden');
+    try { updateBadge(); } catch(_) {}
+    return;
+  }
   buildCatFilter();
   renderCards();
   updateBadge();

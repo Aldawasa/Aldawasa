@@ -256,8 +256,8 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://whtleoyhoidapvvandtr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodGxlb3lob2lkYXB2dmFuZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTg3MTQsImV4cCI6MjA5Mjg3NDcxNH0.hbT9Hafej2aSrnlYUPH6YdCqTXA0OPQGCtqDksm4gjY';
+const SUPABASE_URL = 'https://qkwadlsmvlnpcoeccqsf.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrd2FkbHNtdmxucGNvZWNjcXNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MjQ3MTUsImV4cCI6MjA4MzMwMDcxNX0.cNMBjD_wTusoc9OxcRP7ql1U35-SRdgsfq9sqKoKEd8';
 // SUPABASE_KEY هو المفتاح العام (anon) — آمن ظهوره. الكتابة محميّة بسياسات RLS + تسجيل الدخول.
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -517,16 +517,37 @@ function removeNewFile(i) {
   renderNewPreviews();
 }
 
+// ضغط الصورة في المتصفح قبل الرفع: أقصى بُعد 1200px — يقلّل الحجم عادةً 5 إلى 15 مرة
+async function compressImage(file, maxDim = 1200, quality = 0.82) {
+  try {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);   // خلفية بيضاء للصور الشفافة
+    ctx.drawImage(bmp, 0, 0, w, h);
+    const toBlob = (type) => new Promise(r => canvas.toBlob(r, type, quality));
+    let blob = await toBlob('image/webp');
+    if (!blob || blob.type !== 'image/webp') blob = await toBlob('image/jpeg');  // سفاري القديم
+    if (!blob || blob.size >= file.size) return file;       // لا فائدة → نرفع الأصل
+    const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+    return new File([blob], 'img.' + ext, { type: blob.type });
+  } catch (e) { return file; }
+}
+
 async function uploadImages(offerIdToUse) {
   const results = [];
   for (let i = 0; i < newFilesToUpload.length; i++) {
-    const file = newFilesToUpload[i];
+    const file = await compressImage(newFilesToUpload[i]);
     const ext = file.name.split('.').pop();
     const filename = `offer_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
     updateProgress(Math.round((i / newFilesToUpload.length) * 80), `رفع ${i + 1}/${newFilesToUpload.length}...`);
 
-    const { error } = await sb.storage.from('offers').upload(filename, file, { cacheControl: 'no-cache', upsert: true });
+    const { error } = await sb.storage.from('offers').upload(filename, file, { cacheControl: '31536000', upsert: true, contentType: file.type });
     if (error) { console.error(error); continue; }
 
     const { data: urlData } = sb.storage.from('offers').getPublicUrl(filename);
